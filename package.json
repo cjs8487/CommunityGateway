@@ -1,18 +1,39 @@
 {
-  "name": "communitygateway",
-  "version": "0.1.0",
-  "description": "A server and API system for building, maintaining, extending, and interacting with online communities",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cjs8487/CommunityGateway.git"
-  },
-  "author": "CJ Schaefer (cjs8487)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/cjs8487/CommunityGateway/issues"
-  }
+    "name": "communitygateway",
+    "version": "0.1.0",
+    "description": "A server and API system for building, maintaining, extending, and interacting with online communities",
+    "main": "index.js",
+    "scripts": {
+        "dev": "nodemon -e js,ts,json --files --exec ts-node src/main.ts",
+        "run": "node src/main.ts"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cjs8487/CommunityGateway"
+    },
+    "author": "CJ Schaefer (cjs8487)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/cjs8487/CommunityGateway/issues"
+    },
+    "dependencies": {
+        "better-sqlite3": "^8.1.0",
+        "dotenv": "^16.0.3",
+        "express": "^4.18.2",
+        "winston": "^3.8.2"
+    },
+    "devDependencies": {
+        "@tsconfig/node18": "^1.0.1",
+        "@types/better-sqlite3": "^7.6.3",
+        "@types/express": "^4.17.17",
+        "@typescript-eslint/eslint-plugin": "^5.51.0",
+        "@typescript-eslint/parser": "^5.51.0",
+        "eslint": "^8.33.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-import-resolver-typescript": "^3.5.3",
+        "eslint-plugin-import": "^2.27.5",
+        "nodemon": "^2.0.20",
+        "ts-node": "^10.9.1",
+        "typescript": "^4.9.5"
+    }
 }
