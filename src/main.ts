@@ -1,4 +1,5 @@
 import express from 'express';
+import { logInfo } from './Logger';
 import api from './routes/API';
 
 const port = 8000;
@@ -7,14 +8,14 @@ const app = express();
 
 // request logging
 app.use((req, res, next) => {
-    console.log(`HTTP ${req.method} ${req.path}`);
+    logInfo(`HTTP ${req.method} ${req.path}`);
     next();
 });
 
 app.use('/', api);
 
 app.listen(port, async () => {
-    console.log(`CommunityGateway server listening on port ${port}`);
+    logInfo(`CommunityGateway server listening on port ${port}`);
 });
 
 // process.on('exit', () => db.close());
