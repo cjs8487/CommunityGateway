@@ -47,7 +47,8 @@
                     "ts": "never",
                     "tsx": "never"
                 }],
-                "implicit-arrow-linebreak": "off"
+                "implicit-arrow-linebreak": "off",
+                "@typescript-eslint/member-delimiter-style": "error"
             }
         }
     ]
