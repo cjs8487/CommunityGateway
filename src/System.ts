@@ -12,6 +12,9 @@ if (testing) {
 const setupScript = readFileSync('src/dbsetup.sql', 'utf-8');
 db.exec(setupScript);
 
+export const sessionsDb: DB =
+    testing ? new Database('sessions.db', { verbose: logVerbose }) : new Database('sessions.db');
+
 // link kill signals to exit to ensure cleanup processes run
 process.on('SIGHUP', () => process.exit(128 + 1));
 process.on('SIGINT', () => process.exit(128 + 2));

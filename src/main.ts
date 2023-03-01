@@ -1,8 +1,10 @@
 import express from 'express';
 import session from 'express-session';
+import SqliteStore from 'better-sqlite3-session-store';
 import { logInfo } from './Logger';
 import api from './routes/API';
 import { testing } from './Environment';
+import { sessionsDb } from './System';
 
 // redeclare express-session so that we can add our own types to the session data interface
 declare module 'express-session' {
@@ -27,6 +29,13 @@ app.use((req, res, next) => {
 // testing is the inverse of the prouction flag, but also allows local testing with a prodution build
 // cookie security and proxy only matter when in production
 app.use(session({
+    store: new (SqliteStore(session))({
+        client: sessionsDb,
+        expired: {
+            clear: true,
+            intervalMs: 90000,
+        },
+    }),
     secret: 'abc',
     resave: false,
     saveUninitialized: true,
