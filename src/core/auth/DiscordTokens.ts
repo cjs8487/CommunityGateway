@@ -1,3 +1,4 @@
+import querystring from 'querystring';
 import axios from 'axios';
 import { discordClientId, discordClientSecret } from '../../Environment';
 
@@ -33,12 +34,12 @@ export const exchangeCode = async (code: string): Promise<DiscordToken> => {
 };
 
 export const refreshToken = async (token: string): Promise<DiscordToken> => {
-    const { data } = await axios.post('https://discord.com/api/v10/oauth2/token', {
+    const { data } = await axios.post('https://discord.com/api/v10/oauth2/token', querystring.stringify({
         client_id: discordClientId,
         client_secret: discordClientSecret,
         grant_type: 'refresh_token',
         refresh_token: token,
-    }, {
+    }), {
         headers: {
             'content-type': 'application/x-www-form-urlencoded',
         },

@@ -1,6 +1,10 @@
 -- SQLite
 create table if not exists users (
-    id integer primary key autoincrement
+    id integer primary key autoincrement,
+    is_discord_auth integer,
+    is_admin integer,
+    discord_id text,
+    refresh_flag integer
 );
 
 create table if not exists oauth (

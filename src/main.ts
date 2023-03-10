@@ -5,13 +5,13 @@ import { logInfo } from './Logger';
 import api from './routes/API';
 import { testing } from './Environment';
 import { sessionsDb } from './System';
+import { User } from './database/UserManager';
 
 // redeclare express-session so that we can add our own types to the session data interface
 declare module 'express-session' {
     interface SessionData {
         loggedIn: boolean;
-        token: string;
-        refresh: string;
+        user?: User;
     }
 }
 

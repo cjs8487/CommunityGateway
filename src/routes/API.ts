@@ -1,6 +1,7 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import bodyParser from 'body-parser';
 import { Router } from 'express';
+import { logError } from '../Logger';
 import { isAuthenticated } from '../core/auth/AuthCore';
 import discordAuth from './auth/DiscordAuth';
 import dynamicData from './dynamicdata/DynamicData';
@@ -18,12 +19,27 @@ api.get('/version', (req, res) => {
 });
 
 api.get('/me', isAuthenticated, async (req, res) => {
-    const { data } = await axios.get('https://discord.com/api/v10/users/@me', {
-        headers: {
-            Authorization: `Bearer ${req.session.token}`,
-        },
-    });
-    res.status(200).send(data);
+    try {
+        const { data } = await axios.get('https://discord.com/api/v10/users/@me', {
+            headers: {
+                Authorization: `Bearer ${req.session.user?.authData?.discordToken?.accessToken}`,
+            },
+        });
+        res.status(200).send(data);
+    } catch (e) {
+        if (isAxiosError(e)) {
+            if (e.response) {
+                logError(
+                    'Unable to fetch user data - one or more services returned an error. ' +
+                    `Error ${e.response.status} - ${e.response.data}`,
+                );
+                req.session.loggedIn = false;
+            } else {
+                logError('An unknown error ocurred while attempting to fetch user data');
+            }
+        }
+        res.status(500).send();
+    }
 });
 
 api.use('/dynamicdata', dynamicData);
