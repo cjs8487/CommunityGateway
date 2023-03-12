@@ -113,7 +113,17 @@ export class UserManager {
         if (active) {
             users = this.db.prepare('select * from users where active=1').all();
         } else {
-            users = this.db.prepare('select * from users join oauth on oauth.owner = users.id').all();
+            users = this.db.prepare(`
+                select
+                    users.id,
+                    users.is_discord_auth,
+                    users.is_admin,
+                    users.discord_id,
+                    users.refresh_flag,
+                    oauth.refresh_token
+                from users
+                join oauth on oauth.owner = users.id
+            `).all();
         }
         return users.map((user: DBUser) => toExternalForm(user));
     }
