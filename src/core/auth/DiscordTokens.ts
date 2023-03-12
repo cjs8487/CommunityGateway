@@ -24,7 +24,7 @@ export const exchangeCode = async (code: string): Promise<DiscordToken> => {
         client_secret: discordClientSecret,
         grant_type: 'authorization_code',
         code,
-        redirect_uri: 'http://localhost:3000/community',
+        redirect_uri: 'http://localhost:3000',
     }, {
         headers: {
             'content-type': 'application/x-www-form-urlencoded',

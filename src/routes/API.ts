@@ -42,6 +42,20 @@ api.get('/me', isAuthenticated, async (req, res) => {
     }
 });
 
+api.get('/logout', isAuthenticated, (req, res, next) => {
+    req.session.loggedIn = false;
+    req.session.user = undefined;
+    req.session.save((err) => {
+        if (err) next(err);
+
+        req.session.regenerate((genErr) => {
+            if (genErr) next(genErr);
+
+            res.sendStatus(200);
+        });
+    });
+});
+
 api.use('/dynamicdata', dynamicData);
 api.use('/auth/discord', discordAuth);
 
