@@ -2,7 +2,7 @@ import axios, { isAxiosError } from 'axios';
 import bodyParser from 'body-parser';
 import { Router } from 'express';
 import { logError } from '../Logger';
-import { isAuthenticated } from '../core/auth/AuthCore';
+import { isAuthenticated, logout } from '../core/auth/AuthCore';
 import discordAuth from './auth/DiscordAuth';
 import dynamicData from './dynamicdata/DynamicData';
 
@@ -18,7 +18,7 @@ api.get('/version', (req, res) => {
     res.send(process.env.npm_package_version).status(200);
 });
 
-api.get('/me', isAuthenticated, async (req, res) => {
+api.get('/me', isAuthenticated, async (req, res, next) => {
     try {
         const { data } = await axios.get('https://discord.com/api/v10/users/@me', {
             headers: {
@@ -31,30 +31,18 @@ api.get('/me', isAuthenticated, async (req, res) => {
             if (e.response) {
                 logError(
                     'Unable to fetch user data - one or more services returned an error. ' +
-                    `Error ${e.response.status} - ${e.response.data}`,
+                    `Error ${e.response.status} - ${JSON.stringify(e.response.data)}`,
                 );
-                req.session.loggedIn = false;
+                next();
             } else {
                 logError('An unknown error ocurred while attempting to fetch user data');
             }
         }
         res.status(500).send();
     }
-});
+}, logout);
 
-api.get('/logout', isAuthenticated, (req, res, next) => {
-    req.session.loggedIn = false;
-    req.session.user = undefined;
-    req.session.save((err) => {
-        if (err) next(err);
-
-        req.session.regenerate((genErr) => {
-            if (genErr) next(genErr);
-
-            res.sendStatus(200);
-        });
-    });
-});
+api.get('/logout', isAuthenticated, logout);
 
 api.use('/dynamicdata', dynamicData);
 api.use('/auth/discord', discordAuth);
