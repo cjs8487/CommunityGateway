@@ -1,6 +1,6 @@
 import querystring from 'querystring';
 import axios from 'axios';
-import { discordClientId, discordClientSecret } from '../../Environment';
+import { discordClientId, discordClientSecret, discordRedirect } from '../../Environment';
 
 export type DiscordToken = {
     accessToken: string;
@@ -24,7 +24,7 @@ export const exchangeCode = async (code: string): Promise<DiscordToken> => {
         client_secret: discordClientSecret,
         grant_type: 'authorization_code',
         code,
-        redirect_uri: 'http://localhost:3000',
+        redirect_uri: discordRedirect,
     }, {
         headers: {
             'content-type': 'application/x-www-form-urlencoded',

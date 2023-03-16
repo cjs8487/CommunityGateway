@@ -3,6 +3,7 @@ import { NextFunction, Router } from 'express';
 import { logError } from '../../Logger';
 import { exchangeCode } from '../../core/auth/DiscordTokens';
 import { userManager } from '../../System';
+import { discordClientId, discordRedirect } from '../../Environment';
 
 type DiscordUser = {
     id: string;
@@ -11,8 +12,18 @@ type DiscordUser = {
 
 const discordAuth = Router();
 
-discordAuth.post('/authorized', async (req, res, next: NextFunction) => {
-    const { code } = req.body;
+const authRoot = 'https://discord.com/api/oauth2/authorize';
+const redirectUrl = encodeURIComponent(discordRedirect);
+const scopeList = ['identify', 'guilds.members.read'];
+const scopes = `scope=${encodeURIComponent(scopeList.join(' '))}`;
+const authUrl = `${authRoot}?client_id=${discordClientId}&redirect_uri=${redirectUrl}&response_type=code&${scopes}`;
+
+discordAuth.get('/doauth', (req, res) => {
+    res.redirect(authUrl);
+});
+
+discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
+    const code = req.query.code as string;
     try {
         const token = await exchangeCode(code);
 
@@ -50,7 +61,7 @@ discordAuth.post('/authorized', async (req, res, next: NextFunction) => {
 
             req.session.save((saveErr) => {
                 if (saveErr) next(saveErr);
-                res.status(200).send(user);
+                res.redirect('/');
             });
         });
     } catch (e) {
