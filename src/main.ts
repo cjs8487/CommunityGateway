@@ -45,6 +45,8 @@ app.use(session({
 
 app.use('/api', api);
 
+app.use(express.static('static'));
+
 app.listen(port, async () => {
     logInfo(`CommunityGateway server listening on port ${port}`);
 });
