@@ -4,6 +4,7 @@ import { logError } from '../../Logger';
 import { exchangeCode } from '../../core/auth/DiscordTokens';
 import { userManager } from '../../System';
 import { discordClientId, discordRedirect } from '../../Environment';
+import { hasAdminRoles } from '../../lib/UserLib';
 
 type DiscordUser = {
     id: string;
@@ -36,9 +37,10 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
 
         // get user if it exists, otherwise register them internally
         const userExists = userManager.userExists(data.id);
+        const admin = await hasAdminRoles(token);
         const user = userExists
             ? userManager.getUser(data.id)
-            : userManager.registerUser(data.id, true, false, { discordToken: token });
+            : userManager.registerUser(data.id, true, admin, { discordToken: token });
         // check the refresh flag - this should never be set on newly created users, so this check, while wasting a few
         // cycles if the user is newly created, is completely safe regardless of which code path obtained the user
         // if the flag is set, update the stored oauth data and clear the flag
@@ -50,6 +52,7 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
         if (userExists) {
             userManager.updateDiscordAuth(user.id, token);
             userManager.clearRefresh(user.id);
+            userManager.setAdmin(user.id, admin);
         }
 
         // load data into session and send

@@ -25,7 +25,12 @@ api.get('/me', isAuthenticated, async (req, res, next) => {
                 Authorization: `Bearer ${req.session.user?.authData?.discordToken?.accessToken}`,
             },
         });
-        res.status(200).send(data);
+        const userData = {
+            ...data,
+            internalId: req.session.user?.id,
+            isAdmin: req.session.user?.isAdmin,
+        };
+        res.status(200).send(userData);
     } catch (e) {
         if (isAxiosError(e)) {
             if (e.response) {

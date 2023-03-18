@@ -151,14 +151,25 @@ export class UserManager {
         return user;
     }
 
-    // modify a user
-    // any modification shortcuts, ie notAdmin and makeAdmin
     flagRefresh(id: number) {
+        const user = this.users.get(id);
+        if (!user) return;
+        user.needsRefresh = true;
         this.db.prepare('update users set refresh_flag=1 where id=?').run(id);
     }
 
     clearRefresh(id: number) {
+        const user = this.users.get(id);
+        if (!user) return;
+        user.needsRefresh = false;
         this.db.prepare('update users set refresh_flag=0 where id=?').run(id);
+    }
+
+    setAdmin(id: number, admin: boolean) {
+        const user = this.users.get(id);
+        if (!user) return;
+        user.isAdmin = admin;
+        this.db.prepare('update users set is_admin=? where id=?').run(admin ? 1 : 0, id);
     }
 
     updateDiscordAuth(id: number, token: DiscordToken) {
