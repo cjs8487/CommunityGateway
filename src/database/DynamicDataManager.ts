@@ -21,6 +21,10 @@ export class DynamicDataManager {
         this.db.prepare('insert into dynamic_data (type, data) values (?, ?)').run(type.id, data);
     }
 
+    updateData(id: number, data: string) {
+        return this.db.prepare('update dynamic_data set data=? where id=?').run(data, id).changes;
+    }
+
     deleteData(id: number): number {
         return this.db.prepare('delete from dynamic_data where id=?').run(id).changes;
     }

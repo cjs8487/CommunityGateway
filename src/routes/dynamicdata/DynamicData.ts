@@ -24,6 +24,22 @@ dynamicData.post('/:typeName', (req, res) => {
     res.status(200).send();
 });
 
+dynamicData.post('/edit/:id', (req, res) => {
+    const { id } = req.params;
+    const parsedId = Number(id);
+    const data = req.body;
+    if (Number.isNaN(parsedId)) {
+        res.status(400).send('Invalid id');
+        return;
+    }
+    const changes = dynamicDataManager.updateData(parsedId, JSON.stringify(data));
+    if (changes === 0) {
+        res.sendStatus(404);
+        return;
+    }
+    res.status(200).send();
+});
+
 dynamicData.delete('/:id', (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
