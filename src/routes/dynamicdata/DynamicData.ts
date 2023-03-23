@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isAdmin, isAuthenticated } from '../../core/auth/AuthCore';
 import { dynamicDataManager } from '../../System';
 import types from './DataType';
 
@@ -12,7 +13,7 @@ dynamicData.get('/:type', (req, res) => {
     res.status(200).send(data);
 });
 
-dynamicData.post('/:typeName', (req, res) => {
+dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
     const { typeName } = req.params;
     const { data } = req.body;
     const type = dynamicDataManager.getType(typeName);
@@ -24,7 +25,7 @@ dynamicData.post('/:typeName', (req, res) => {
     res.status(200).send();
 });
 
-dynamicData.post('/edit/:id', (req, res) => {
+dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
     const data = req.body;
@@ -40,7 +41,7 @@ dynamicData.post('/edit/:id', (req, res) => {
     res.status(200).send();
 });
 
-dynamicData.delete('/:id', (req, res) => {
+dynamicData.delete('/:id', isAuthenticated, isAdmin, (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
     if (Number.isNaN(parsedId)) {

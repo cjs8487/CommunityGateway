@@ -11,6 +11,11 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
     else res.sendStatus(401);
 };
 
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.user && req.session.user.isAdmin) next();
+    else res.sendStatus(403);
+};
+
 export const logout = (req: Request, res: Response, next: NextFunction) => {
     req.session.loggedIn = false;
     req.session.user = undefined;
