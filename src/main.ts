@@ -11,6 +11,7 @@ import { User } from './database/UserManager';
 declare module 'express-session' {
     interface SessionData {
         loggedIn: boolean;
+        state?: string;
         user?: User;
     }
 }
