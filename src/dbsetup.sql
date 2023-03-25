@@ -12,7 +12,7 @@ create table if not exists oauth (
     owner integer not null,
     target text not null,
     refresh_token not null,
-    foreign key(owner) references users(id)
+    foreign key(owner) references users(id) on delete cascade
 );
 
 create table if not exists dynamic_data_types(
@@ -24,5 +24,5 @@ create table if not exists dynamic_data(
     id integer primary key autoincrement,
     type integer not null,
     data text not null,
-    foreign key(type) references dynamic_data_types(id)
+    foreign key(type) references dynamic_data_types(id) on delete cascade
 );
