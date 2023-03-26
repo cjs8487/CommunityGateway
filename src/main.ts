@@ -3,7 +3,7 @@ import session from 'express-session';
 import SqliteStore from 'better-sqlite3-session-store';
 import { logInfo } from './Logger';
 import api from './routes/API';
-import { testing } from './Environment';
+import { sessionSecret, testing } from './Environment';
 import { sessionsDb } from './System';
 
 // redeclare express-session so that we can add our own types to the session data interface
@@ -36,7 +36,7 @@ app.use(session({
             intervalMs: 90000,
         },
     }),
-    secret: 'abc',
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: true,
     cookie: { secure: !testing },
