@@ -1,9 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { DiscordToken } from './DiscordTokens';
-
-export type AuthData = {
-    discordToken?: DiscordToken;
-}
+import { userManager } from '../../System';
 
 // basic authentication check - first level of security for secured resources
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
@@ -12,7 +8,7 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
 };
 
 export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
-    if (req.session.user && req.session.user.isAdmin) next();
+    if (req.session.user && userManager.getUser(req.session.user)?.isAdmin) next();
     else res.sendStatus(403);
 };
 

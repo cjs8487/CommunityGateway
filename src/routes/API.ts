@@ -1,6 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 import bodyParser from 'body-parser';
 import { Router } from 'express';
+import { userManager } from '../System';
 import { logError } from '../Logger';
 import { isAuthenticated, logout } from '../core/auth/AuthCore';
 import discordAuth from './auth/DiscordAuth';
@@ -19,16 +20,21 @@ api.get('/version', (req, res) => {
 });
 
 api.get('/me', isAuthenticated, async (req, res, next) => {
+    if (!req.session.user) {
+        next('Login flag is set, but no user is attached');
+        return;
+    }
     try {
+        const internalUser = userManager.getUser(req.session.user);
         const { data } = await axios.get('https://discord.com/api/v10/users/@me', {
             headers: {
-                Authorization: `Bearer ${req.session.user?.authData?.discordToken?.accessToken}`,
+                Authorization: `Bearer ${internalUser?.authData?.discordToken?.accessToken}`,
             },
         });
         const userData = {
             ...data,
-            internalId: req.session.user?.id,
-            isAdmin: req.session.user?.isAdmin,
+            internalId: req.session.user,
+            isAdmin: internalUser?.isAdmin,
         };
         res.status(200).send(userData);
     } catch (e) {

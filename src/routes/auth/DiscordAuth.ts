@@ -77,7 +77,7 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
             if (err) next(err);
 
             req.session.loggedIn = true;
-            req.session.user = user;
+            req.session.user = user.id;
 
             req.session.save((saveErr) => {
                 if (saveErr) next(saveErr);

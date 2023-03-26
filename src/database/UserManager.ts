@@ -1,7 +1,7 @@
 import { Database } from 'better-sqlite3';
 import { isAxiosError } from 'axios';
 import { logError, logInfo } from '../Logger';
-import { AuthData } from '../core/auth/AuthCore';
+import { AuthData } from '../core/auth/AuthLib';
 import { DiscordToken, refreshToken } from '../core/auth/DiscordTokens';
 
 export type User = {
