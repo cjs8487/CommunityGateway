@@ -12,7 +12,7 @@ const logFormat = combine(
 export const logger = createLogger({
     level: 'info',
     format: logFormat,
-    transports: [],
+    transports: [new transports.File({ filename: 'full.log' })],
 });
 
 if (testing) {
