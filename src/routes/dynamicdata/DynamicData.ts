@@ -28,7 +28,7 @@ dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
 dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
-    const data = req.body;
+    const { data } = req.body;
     if (Number.isNaN(parsedId)) {
         res.status(400).send('Invalid id');
         return;
