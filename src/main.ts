@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import session from 'express-session';
 import SqliteStore from 'better-sqlite3-session-store';
@@ -21,6 +22,10 @@ const app = express();
 
 // request logging
 app.use((req, res, next) => {
+    if (!req.path.includes('/api')) {
+        next();
+        return;
+    }
     logInfo(`HTTP ${req.method} ${req.path}`);
     next();
 });
@@ -46,6 +51,11 @@ app.use(session({
 app.use('/api', api);
 
 app.use(express.static('static'));
+
+app.get('/*', (req, res) => {
+    logInfo(`Client Request ${req.path}`);
+    res.sendFile(path.join(__dirname, '../static', 'index.html'));
+});
 
 app.listen(port, async () => {
     logInfo(`CommunityGateway server listening on port ${port}`);
