@@ -26,3 +26,22 @@ create table if not exists dynamic_data(
     data text not null,
     foreign key(type) references dynamic_data_types(id) on delete cascade
 );
+
+create table if not exists asyncs (
+    id integer primary key autoincrement,
+    name text not null,
+    permalink text not null,
+    hash text not null,
+    creator integer not null,
+    foreign key(creator) references(users)
+);
+
+create table if not exists async_submissions (
+    id integer primary key autoincrement,
+    race integer not null,
+    user intger not null,
+    time string not null,
+    comment text,
+    foreign key(race) references(asyncs) on delete cascade,
+    foreign key(user) references(users)
+);

@@ -6,6 +6,7 @@ import { logError } from '../Logger';
 import { isAuthenticated, logout } from '../core/auth/AuthCore';
 import discordAuth from './auth/DiscordAuth';
 import dynamicData from './dynamicdata/DynamicData';
+import asyncs from './asyncs/AsyncList';
 
 const api = Router();
 
@@ -56,6 +57,7 @@ api.get('/me', isAuthenticated, async (req, res, next) => {
 api.get('/logout', isAuthenticated, logout);
 
 api.use('/dynamicdata', dynamicData);
+api.use('/asyncs', asyncs);
 api.use('/auth/discord', discordAuth);
 
 export default api;

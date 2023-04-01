@@ -4,6 +4,7 @@ import { testing } from './Environment';
 import { logInfo, logVerbose } from './Logger';
 import { DynamicDataManager } from './database/DynamicDataManager';
 import { UserManager } from './database/UserManager';
+import { AsyncManager } from './database/AsyncManager';
 
 const db: DB = testing ? new Database('database.db', { verbose: logVerbose }) : new Database('database.db');
 if (testing) {
@@ -25,5 +26,6 @@ process.on('exit', () => db.close());
 
 export const userManager = new UserManager(db);
 export const dynamicDataManager = new DynamicDataManager(db);
+export const asyncManager = new AsyncManager(db);
 
 export default {};
