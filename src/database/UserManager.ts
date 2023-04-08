@@ -122,7 +122,7 @@ export class UserManager {
                     users.refresh_flag,
                     oauth.refresh_token
                 from users
-                join oauth on oauth.owner = users.id
+                left join oauth on oauth.owner = users.id
             `).all();
         }
         return users.map((user: DBUser) => toExternalForm(user));
