@@ -8,10 +8,12 @@ export type User = {
     id: number;
     hasDiscordAuth: boolean;
     discordId: string;
+    discordUsername: string;
+    discordAvatar: string;
     isAdmin: boolean;
     authData?: AuthData;
     needsRefresh: boolean;
-} | undefined;
+};
 
 type UserData = {
     id: number;
@@ -19,6 +21,8 @@ type UserData = {
     isAdmin: boolean;
     refreshToken: string;
     discordId: string;
+    discordUsername: string;
+    discordAvatar: string;
     needsRefresh: boolean;
 }
 
@@ -28,6 +32,8 @@ type DBUser = {
     is_admin: number;
     refresh_token: string;
     discord_id: string;
+    discord_avatar: string;
+    discord_username: string;
     refresh_flag: number;
 }
 
@@ -37,6 +43,8 @@ const toExternalForm = (user: DBUser): UserData => ({
     isAdmin: !!user.is_admin,
     refreshToken: user.refresh_token,
     discordId: user.discord_id,
+    discordUsername: user.discord_username,
+    discordAvatar: user.discord_avatar,
     needsRefresh: !!user.refresh_flag,
 });
 
@@ -56,6 +64,8 @@ export class UserManager {
                 hasDiscordAuth: userData.hasDiscordAuth,
                 isAdmin: userData.isAdmin,
                 discordId: userData.discordId,
+                discordUsername: userData.discordUsername,
+                discordAvatar: userData.discordAvatar,
                 needsRefresh: userData.needsRefresh,
                 authData: {},
             };
@@ -96,7 +106,7 @@ export class UserManager {
     getUser(user: number): User;
     getUser(user: string): User;
 
-    getUser(user: number | string): User {
+    getUser(user: number | string): User | undefined {
         if (typeof user === 'string') {
             return this.discordMap.get(user);
         }
@@ -119,6 +129,8 @@ export class UserManager {
                     users.is_discord_auth,
                     users.is_admin,
                     users.discord_id,
+                    users.discord_username,
+                    users.discord_avatar,
                     users.refresh_flag,
                     oauth.refresh_token
                 from users
@@ -128,10 +140,18 @@ export class UserManager {
         return users.map((user: DBUser) => toExternalForm(user));
     }
 
-    registerUser(discordId: string, discordAuth: boolean, admin: boolean, authData: AuthData): User {
-        const userInsertResult = this.db.prepare(
-            'insert into users (discord_id, is_discord_auth, is_admin) values (?, ?, ?)',
-        ).run(discordId, discordAuth ? 1 : 0, admin ? 1 : 0);
+    registerUser(
+        discordId: string,
+        discordUsername: string,
+        discordAvatar: string,
+        discordAuth: boolean,
+        admin: boolean,
+        authData: AuthData,
+    ): User {
+        const userInsertResult = this.db.prepare(`
+            insert into users (discord_id, is_discord_auth, is_admin, discord_avatar, discord_username)
+            values (?, ?, ?, ?, ?)
+        `).run(discordId, discordAuth ? 1 : 0, admin ? 1 : 0, discordAvatar, discordUsername);
         const id = userInsertResult.lastInsertRowid as number;
         if (authData.discordToken) {
             this.db.prepare(
@@ -145,6 +165,8 @@ export class UserManager {
             isAdmin: admin,
             authData,
             discordId,
+            discordAvatar,
+            discordUsername,
             needsRefresh: false,
         };
         this.users.set(id, user);

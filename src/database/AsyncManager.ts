@@ -1,10 +1,16 @@
 import { Database } from 'better-sqlite3';
+// eslint-disable-next-line import/no-cycle
 import { userManager } from '../System';
-import { User } from './UserManager';
+
+export type DisplayUser = {
+    username: string;
+    avatar: string;
+    discordId: string;
+}
 
 export type AsyncSubmission = {
     id: number;
-    user: User;
+    user: DisplayUser;
     time: string;
     comment: string;
 }
@@ -14,7 +20,7 @@ export type Async = {
     name: string;
     permalink: string;
     hash: string;
-    creator: User;
+    creator: DisplayUser;
     submissions: AsyncSubmission[];
 }
 
@@ -43,32 +49,65 @@ export class AsyncManager {
 
     getAsyncList(): Async[] {
         const asyncs: DBAsync[] = this.db.prepare('select * from asyncs').all();
-        return asyncs.map((async) => ({
-            id: async.id,
-            name: async.name,
-            permalink: async.permalink,
-            hash: async.hash,
-            creator: userManager.getUser(async.creator),
-            submissions: [],
-        }));
+        const submissions: DBSubmission[] = this.db.prepare('select * from async_submissions').all();
+
+        return asyncs.map((async) => {
+            const creator = userManager.getUser(async.creator);
+            return {
+                id: async.id,
+                name: async.name,
+                permalink: async.permalink,
+                hash: async.hash,
+                creator: {
+                    discordId: creator.discordId,
+                    username: creator.discordUsername,
+                    avatar: creator.discordAvatar,
+                },
+                submissions: submissions.filter((submission) => submission.race === async.id).map((submission) => {
+                    const submitter = userManager.getUser(submission.user);
+                    return {
+                        id: submission.id,
+                        user: {
+                            discordId: submitter.discordId,
+                            avatar: submitter.discordAvatar,
+                            username: submitter.discordUsername,
+                        },
+                        time: submission.time,
+                        comment: submission.comment,
+                    };
+                }),
+            };
+        });
     }
 
     getAsync(id: number): Async {
         const raceData: DBAsync = this.db.prepare('select * from asyncs where id=?').get(id);
         const submissions: DBSubmission[] = this.db.prepare('select * from async_submissions where race=?').all(id);
 
+        const creator = userManager.getUser(raceData.creator);
         return {
             id: raceData.id,
             name: raceData.name,
             permalink: raceData.permalink,
             hash: raceData.hash,
-            creator: userManager.getUser(raceData.creator),
-            submissions: submissions.map((submission) => ({
-                id: submission.id,
-                user: userManager.getUser(submission.user),
-                time: submission.time,
-                comment: submission.time,
-            })),
+            creator: {
+                discordId: creator.discordId,
+                username: creator.discordUsername,
+                avatar: creator.discordAvatar,
+            },
+            submissions: submissions.map((submission) => {
+                const submitter = userManager.getUser(submission.user);
+                return {
+                    id: submission.id,
+                    user: {
+                        discordId: submitter.discordId,
+                        avatar: submitter.discordAvatar,
+                        username: submitter.discordUsername,
+                    },
+                    time: submission.time,
+                    comment: submission.comment,
+                };
+            }),
         };
     }
 
@@ -80,29 +119,37 @@ export class AsyncManager {
         this.db.prepare('delete from asyncs where id=?').run(id);
     }
 
-    createAsync(name: string, permalink: string, hash: string, creator: User) {
-        this.db
+    createAsync(name: string, permalink: string, hash: string, creator: number) {
+        return this.db
             .prepare('insert into asyncs (name, permalink, hash, creator) values (?, ?, ?, ?)')
-            .run(name, permalink, hash, creator?.id);
+            .run(name, permalink, hash, creator)
+            .lastInsertRowid;
     }
 
     getSubmissionsForAsync(id: number): AsyncSubmission[] {
         const submissions = this.db.prepare('select * from async_submissions where id=?').all(id);
-        return submissions.map((submission) => ({
-            id: submission.id,
-            user: userManager.getUser(submission.user),
-            time: submission.time,
-            comment: submission.time,
-        }));
+        return submissions.map((submission) => {
+            const user = userManager.getUser(submission.user);
+            return {
+                id: submission.id,
+                user: {
+                    discordId: user.discordId,
+                    avatar: user.discordAvatar,
+                    username: user.discordUsername,
+                },
+                time: submission.time,
+                comment: submission.time,
+            };
+        });
     }
 
-    createSubmission(asyncId: number, user: User, time: string, comment: string) {
+    createSubmission(asyncId: number, user: number, time: string, comment: string) {
         this.db
             .prepare('insert into async_submissions (race, user, time, comment) values (?, ?, ?, ?)')
-            .run(asyncId, user?.id, time, comment);
+            .run(asyncId, user, time, comment);
     }
 
     deleteSubmission(id: number) {
-        this.db.prepare('delete from async_submissions where id=?').run(id);
+        return this.db.prepare('delete from async_submissions where id=?').run(id).changes;
     }
 }

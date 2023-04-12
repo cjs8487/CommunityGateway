@@ -6,11 +6,7 @@ import { exchangeCode } from '../../core/auth/DiscordTokens';
 import { userManager } from '../../System';
 import { discordClientId, discordRedirect } from '../../Environment';
 import { hasAdminRoles } from '../../lib/UserLib';
-
-type DiscordUser = {
-    id: string;
-    username: string;
-}
+import { DiscordUser } from '../../lib/DiscordTypes';
 
 const discordAuth = Router();
 
@@ -57,7 +53,7 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
         const admin = await hasAdminRoles(token);
         const user = userExists
             ? userManager.getUser(data.id)
-            : userManager.registerUser(data.id, true, admin, { discordToken: token });
+            : userManager.registerUser(data.id, data.username, data.avatar, true, admin, { discordToken: token });
         // check the refresh flag - this should never be set on newly created users, so this check, while wasting a few
         // cycles if the user is newly created, is completely safe regardless of which code path obtained the user
         // if the flag is set, update the stored oauth data and clear the flag

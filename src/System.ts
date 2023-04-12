@@ -4,6 +4,7 @@ import { testing } from './Environment';
 import { logInfo, logVerbose } from './Logger';
 import { DynamicDataManager } from './database/DynamicDataManager';
 import { UserManager } from './database/UserManager';
+// eslint-disable-next-line import/no-cycle
 import { AsyncManager } from './database/AsyncManager';
 
 const db: DB = testing ? new Database('database.db', { verbose: logVerbose }) : new Database('database.db');

@@ -4,6 +4,8 @@ create table if not exists users (
     is_discord_auth integer,
     is_admin integer,
     discord_id text,
+    discord_avatar text,
+    discord_username text,
     refresh_flag integer
 );
 
@@ -33,7 +35,7 @@ create table if not exists asyncs (
     permalink text not null,
     hash text not null,
     creator integer not null,
-    foreign key(creator) references(users)
+    foreign key(creator) references users(id)
 );
 
 create table if not exists async_submissions (
@@ -42,6 +44,6 @@ create table if not exists async_submissions (
     user intger not null,
     time string not null,
     comment text,
-    foreign key(race) references(asyncs) on delete cascade,
-    foreign key(user) references(users)
+    foreign key(race) references asyncs(id) on delete cascade,
+    foreign key(user) references users(id)
 );
