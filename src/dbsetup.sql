@@ -34,6 +34,8 @@ create table if not exists asyncs (
     name text not null,
     permalink text not null,
     hash text not null,
+    version text not null,
+    version_link not null,
     creator integer not null,
     foreign key(creator) references users(id)
 );

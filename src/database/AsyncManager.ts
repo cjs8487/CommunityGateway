@@ -20,6 +20,8 @@ export type Async = {
     name: string;
     permalink: string;
     hash: string;
+    version: string;
+    versionLink: string;
     creator: DisplayUser;
     submissions: AsyncSubmission[];
 }
@@ -37,6 +39,8 @@ type DBAsync = {
     name: string;
     permalink: string;
     hash: string;
+    version: string;
+    version_link: string;
     creator: number;
 }
 
@@ -58,6 +62,8 @@ export class AsyncManager {
                 name: async.name,
                 permalink: async.permalink,
                 hash: async.hash,
+                version: async.version,
+                versionLink: async.version_link,
                 creator: {
                     discordId: creator.discordId,
                     username: creator.discordUsername,
@@ -90,6 +96,8 @@ export class AsyncManager {
             name: raceData.name,
             permalink: raceData.permalink,
             hash: raceData.hash,
+            version: raceData.version,
+            versionLink: raceData.version_link,
             creator: {
                 discordId: creator.discordId,
                 username: creator.discordUsername,
