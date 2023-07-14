@@ -39,6 +39,7 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
             // ultimately we need to redirect out of the backend flow even if though it failed
             res.redirect('/');
         });
+        return;
     }
     try {
         const token = await exchangeCode(code);
