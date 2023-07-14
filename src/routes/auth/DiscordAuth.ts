@@ -29,7 +29,9 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
     const state = req.query.state as string;
     if (state !== req.session.state) {
         // deny the auth request, this is a possible instance of CSRF, replay attack, or other malicious request
-        logWarn(`A potentially malicious Discord authorization request has been denied. Session id: ${req.session.id}`);
+        logWarn(
+            `A potentially malicious Discord authorization request has been denied. Session id: ${req.session.id}`,
+        );
         // destroy this session immediately - if this is a malicious request this will prevent any further requests
         // from attempting to hijack this session
         req.session.destroy((err) => {
@@ -42,24 +44,40 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
         const token = await exchangeCode(code);
 
         // fetch data from discord api for db cache
-        const { data }: { data: DiscordUser } = await axios.get('https://discord.com/api/v10/users/@me', {
-            headers: {
-                Authorization: `Bearer ${token.accessToken}`,
+        const { data }: { data: DiscordUser } = await axios.get(
+            'https://discord.com/api/v10/users/@me',
+            {
+                headers: {
+                    Authorization: `Bearer ${token.accessToken}`,
+                },
             },
-        });
+        );
 
         // get user if it exists, otherwise register them internally
         const userExists = userManager.userExists(data.id);
         const admin = await hasAdminRoles(token);
         const user = userExists
             ? userManager.getUser(data.id)
-            : userManager.registerUser(data.id, data.username, data.avatar, true, admin, { discordToken: token });
+            : userManager.registerUser(
+                data.id,
+                data.username,
+                data.avatar,
+                true,
+                admin,
+                { discordToken: token },
+            );
         // check the refresh flag - this should never be set on newly created users, so this check, while wasting a few
         // cycles if the user is newly created, is completely safe regardless of which code path obtained the user
         // if the flag is set, update the stored oauth data and clear the flag
         if (!user) {
-            logError('find or create user resulted in an undefined user');
-            res.status(500).send('An unknown error ocurred during authorization');
+            logError(
+                `Find or create user resulted in an undefined user. Search for id ${
+                    data.id
+                }} failed while using the ${typeof data.id} overload`,
+            );
+            res.status(500).send(
+                'An unknown error ocurred during authorization',
+            );
             return;
         }
         if (userExists) {
@@ -82,9 +100,15 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
         });
     } catch (e) {
         if (isAxiosError(e)) {
-            logError(`${e.message}: ${e.response?.status} - ${JSON.stringify(e.response?.data)}`);
+            logError(
+                `${e.message}: ${e.response?.status} - ${JSON.stringify(
+                    e.response?.data,
+                )}`,
+            );
         } else {
-            logError(`An unknown error ocurred while handling a request - ${e}`);
+            logError(
+                `An unknown error ocurred while handling a request - ${e}`,
+            );
         }
         res.status(500).send();
     }
