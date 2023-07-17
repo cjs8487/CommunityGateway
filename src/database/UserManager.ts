@@ -24,7 +24,7 @@ type UserData = {
     discordUsername: string;
     discordAvatar: string;
     needsRefresh: boolean;
-}
+};
 
 type DBUser = {
     id: number;
@@ -35,7 +35,7 @@ type DBUser = {
     discord_avatar: string;
     discord_username: string;
     refresh_flag: number;
-}
+};
 
 const toExternalForm = (user: DBUser): UserData => ({
     id: user.id,
@@ -73,7 +73,9 @@ export class UserManager {
                 if (!user.authData) {
                     user.authData = {};
                 }
-                user.authData.discordToken = await refreshToken(userData.refreshToken);
+                user.authData.discordToken = await refreshToken(
+                    userData.refreshToken,
+                );
             } catch (e) {
                 let errorMessage = 'Error creating user from database cache - ';
                 let log = true;
@@ -84,10 +86,13 @@ export class UserManager {
                         if (e.response.status === 400) {
                             this.flagRefresh(user.id);
                             log = false;
-                            logInfo(`Flagging user ${user.id} as needing refresh`);
+                            logInfo(
+                                `Flagging user ${user.id} as needing refresh`,
+                            );
                         }
                     } else {
-                        errorMessage += 'this error occurred in a network request, but there was no response data';
+                        errorMessage +=
+                            'this error occurred in a network request, but there was no response data';
                     }
                 }
 
@@ -114,7 +119,9 @@ export class UserManager {
     }
 
     getUserData(user: number): User {
-        const selectedUser: DBUser = this.db.prepare('select * from users where user_id=?').get(user);
+        const selectedUser: DBUser = this.db
+            .prepare('select * from users where user_id=?')
+            .get(user);
         return toExternalForm(selectedUser);
     }
 
@@ -123,7 +130,9 @@ export class UserManager {
         if (active) {
             users = this.db.prepare('select * from users where active=1').all();
         } else {
-            users = this.db.prepare(`
+            users = this.db
+                .prepare(
+                    `
                 select
                     users.id,
                     users.is_discord_auth,
@@ -135,7 +144,9 @@ export class UserManager {
                     oauth.refresh_token
                 from users
                 left join oauth on oauth.owner = users.id
-            `).all();
+            `,
+                )
+                .all();
         }
         return users.map((user: DBUser) => toExternalForm(user));
     }
@@ -148,15 +159,27 @@ export class UserManager {
         admin: boolean,
         authData: AuthData,
     ): User {
-        const userInsertResult = this.db.prepare(`
+        const userInsertResult = this.db
+            .prepare(
+                `
             insert into users (discord_id, is_discord_auth, is_admin, discord_avatar, discord_username)
             values (?, ?, ?, ?, ?)
-        `).run(discordId, discordAuth ? 1 : 0, admin ? 1 : 0, discordAvatar, discordUsername);
+        `,
+            )
+            .run(
+                discordId,
+                discordAuth ? 1 : 0,
+                admin ? 1 : 0,
+                discordAvatar,
+                discordUsername,
+            );
         const id = userInsertResult.lastInsertRowid as number;
         if (authData.discordToken) {
-            this.db.prepare(
-                'insert into oauth (owner, target, refresh_token) values (?, ?, ?)',
-            ).run(id, 'discord', authData.discordToken.refreshToken);
+            this.db
+                .prepare(
+                    'insert into oauth (owner, target, refresh_token) values (?, ?, ?)',
+                )
+                .run(id, 'discord', authData.discordToken.refreshToken);
         }
 
         const user: User = {
@@ -170,6 +193,7 @@ export class UserManager {
             needsRefresh: false,
         };
         this.users.set(id, user);
+        this.discordMap.set(discordId, user);
         return user;
     }
 
@@ -191,7 +215,9 @@ export class UserManager {
         const user = this.users.get(id);
         if (!user) return;
         user.isAdmin = admin;
-        this.db.prepare('update users set is_admin=? where id=?').run(admin ? 1 : 0, id);
+        this.db
+            .prepare('update users set is_admin=? where id=?')
+            .run(admin ? 1 : 0, id);
     }
 
     updateDiscordAuth(id: number, token: DiscordToken) {
@@ -199,9 +225,11 @@ export class UserManager {
         if (user && user.authData) {
             user.authData.discordToken = token;
         }
-        this.db.prepare(
-            'update oauth set refresh_token=? where owner=? and target=?',
-        ).run(token.refreshToken, id, 'discord');
+        this.db
+            .prepare(
+                'update oauth set refresh_token=? where owner=? and target=?',
+            )
+            .run(token.refreshToken, id, 'discord');
     }
 
     userExists(id: number): boolean;
@@ -209,9 +237,22 @@ export class UserManager {
 
     userExists(id: number | string) {
         if (typeof id === 'string') {
-            return this.db.prepare('select id from users where discord_id=?').all(id).length > 0;
+            if (this.discordMap.has(id)) {
+                return true;
+            }
+            return (
+                this.db
+                    .prepare('select id from users where discord_id=?')
+                    .all(id).length > 0
+            );
         }
-        return this.users.has(id);
+        if (this.users.has(id)) {
+            return true;
+        }
+        return (
+            this.db.prepare('select id from users where id=?').all(id).length >
+            0
+        );
     }
 
     isAdmin(id: number) {
