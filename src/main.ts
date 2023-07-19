@@ -33,20 +33,22 @@ app.use((req, res, next) => {
 // session configuration
 // testing is the inverse of the prouction flag, but also allows local testing with a prodution build
 // cookie security and proxy only matter when in production
-app.use(session({
-    store: new (SqliteStore(session))({
-        client: sessionsDb,
-        expired: {
-            clear: true,
-            intervalMs: 90000,
-        },
+app.use(
+    session({
+        store: new (SqliteStore(session))({
+            client: sessionsDb,
+            expired: {
+                clear: true,
+                intervalMs: 90000,
+            },
+        }),
+        secret: sessionSecret,
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: !testing },
+        proxy: !testing,
     }),
-    secret: sessionSecret,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: !testing },
-    proxy: !testing,
-}));
+);
 
 app.use('/api', api);
 

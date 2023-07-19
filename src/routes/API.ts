@@ -20,39 +20,52 @@ api.get('/version', (req, res) => {
     res.send(process.env.npm_package_version).status(200);
 });
 
-api.get('/me', isAuthenticated, async (req, res, next) => {
-    if (!req.session.user) {
-        next('Login flag is set, but no user is attached');
-        return;
-    }
-    try {
-        const internalUser = userManager.getUser(req.session.user);
-        const { data } = await axios.get('https://discord.com/api/v10/users/@me', {
-            headers: {
-                Authorization: `Bearer ${internalUser?.authData?.discordToken?.accessToken}`,
-            },
-        });
-        const userData = {
-            ...data,
-            internalId: req.session.user,
-            isAdmin: internalUser?.isAdmin,
-        };
-        res.status(200).send(userData);
-    } catch (e) {
-        if (isAxiosError(e)) {
-            if (e.response) {
-                logError(
-                    'Unable to fetch user data - one or more services returned an error. ' +
-                    `Error ${e.response.status} - ${JSON.stringify(e.response.data)}`,
-                );
-                next();
-            } else {
-                logError('An unknown error ocurred while attempting to fetch user data');
-            }
+api.get(
+    '/me',
+    isAuthenticated,
+    async (req, res, next) => {
+        if (!req.session.user) {
+            next('Login flag is set, but no user is attached');
+            return;
         }
-        res.status(500).send();
-    }
-}, logout);
+        try {
+            const internalUser = userManager.getUser(req.session.user);
+            const { data } = await axios.get(
+                'https://discord.com/api/v10/users/@me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${internalUser?.authData?.discordToken?.accessToken}`,
+                    },
+                },
+            );
+            const userData = {
+                ...data,
+                displayName: data.global_name,
+                internalId: req.session.user,
+                isAdmin: internalUser?.isAdmin,
+            };
+            res.status(200).send(userData);
+        } catch (e) {
+            if (isAxiosError(e)) {
+                if (e.response) {
+                    logError(
+                        'Unable to fetch user data - one or more services returned an error. ' +
+                            `Error ${e.response.status} - ${JSON.stringify(
+                                e.response.data,
+                            )}`,
+                    );
+                    next();
+                } else {
+                    logError(
+                        'An unknown error ocurred while attempting to fetch user data',
+                    );
+                }
+            }
+            res.status(500).send();
+        }
+    },
+    logout,
+);
 
 api.get('/logout', isAuthenticated, logout);
 
