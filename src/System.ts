@@ -7,13 +7,38 @@ import { UserManager } from './database/UserManager';
 // eslint-disable-next-line import/no-cycle
 import { AsyncManager } from './database/AsyncManager';
 
-const db: DB = testing ? new Database('database.db', { verbose: logVerbose }) : new Database('database.db');
+const db: DB = testing
+    ? new Database('database.db', { verbose: logVerbose })
+    : new Database('database.db');
 if (testing) {
     logInfo('db verbose enabled');
 }
 
-const setupScript = readFileSync('src/dbsetup.sql', 'utf-8');
+// database setup
+db.exec('pragma foreign_keys=off');
+const dbScriptDir = 'src/database/scripts';
+const tables = db
+    .prepare("select name from sqlite_master where type='table'")
+    .all()
+    .filter((table: { name: string }) => !table.name.startsWith('sqlite_'))
+    .map((table: { name: string }) => table.name);
+tables.forEach((table) => {
+    logInfo(`Backing up ${table}`);
+    db.exec(`drop table if exists ${table}_temp`);
+    db.exec(`create table ${table}_temp as select * from ${table}`);
+    db.exec(`drop table ${table}`);
+});
+
+logInfo('Running database initialization');
+const setupScript = readFileSync(`${dbScriptDir}/dbsetup.sql`, 'utf-8');
 db.exec(setupScript);
+
+tables.forEach((table) => {
+    logInfo(`Restoring ${table} from backup and cleaning up`);
+    db.exec(`insert into ${table} select * from ${table}_temp`);
+    db.exec(`drop table ${table}_temp`);
+});
+db.exec('pragma foreign_keys=on');
 
 export const sessionsDb: DB = new Database('sessions.db');
 
