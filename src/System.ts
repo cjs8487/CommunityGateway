@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import Database, { Database as DB } from 'better-sqlite3';
 import { testing } from './Environment';
 import { logInfo, logVerbose } from './Logger';
@@ -15,30 +15,65 @@ if (testing) {
 }
 
 // database setup
-db.exec('pragma foreign_keys=off');
+// this setup sequence makes several assumptions
+//  - the existence of the directory src/database/scripts
+//  - the directory contains ONLY files named v1...vx, where v1 is the base script
+//          and the following scripts modify existing properties
+//  - the files are named sequentially
+//  - no files touch the user_version pragma; it is maintained as part of this sequence
+//
+// Additionally, the sequence makes a concession when the testing environment variable is set.
+// When set, before beginning the migration sequence, the database will be copied from a backup
+// file, and the sequence will set the stored version back by one. It is assumed that the backup
+// will always be the result of the second to last migration script being run. This allows the
+// database to kept in sync during the dev cycle without making manual changes to it
+logInfo('starting database migration');
+if (testing) {
+    logInfo('copying database from backup');
+}
+
+const dbVersion: number = db.pragma('user_version', { simple: true });
 const dbScriptDir = 'src/database/scripts';
-const tables = db
-    .prepare("select name from sqlite_master where type='table'")
-    .all()
-    .filter((table: { name: string }) => !table.name.startsWith('sqlite_'))
-    .map((table: { name: string }) => table.name);
-tables.forEach((table) => {
-    logInfo(`Backing up ${table}`);
-    db.exec(`drop table if exists ${table}_temp`);
-    db.exec(`create table ${table}_temp as select * from ${table}`);
-    db.exec(`drop table ${table}`);
+const migrationFileNames = readdirSync(dbScriptDir).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
+);
+migrationFileNames.forEach((migrationFileName, index) => {
+    if (dbVersion > index) return;
+    logInfo(`migrating with script ${migrationFileName}`);
+    const script = readFileSync(`${dbScriptDir}/${migrationFileName}`, 'utf-8');
+    db.exec(script);
 });
 
-logInfo('Running database initialization');
-const setupScript = readFileSync(`${dbScriptDir}/dbsetup.sql`, 'utf-8');
-db.exec(setupScript);
+if (testing) {
+    logInfo('un-migrating database by one version');
+    const newVersion: number = db.pragma('user_version', { simple: true });
+    db.pragma(`user_version=${newVersion - 1}`);
+}
 
-tables.forEach((table) => {
-    logInfo(`Restoring ${table} from backup and cleaning up`);
-    db.exec(`insert into ${table} select * from ${table}_temp`);
-    db.exec(`drop table ${table}_temp`);
-});
-db.exec('pragma foreign_keys=on');
+// db.exec('pragma foreign_keys=off');
+// const dbScriptDir = 'src/database/scripts';
+// const tables = db
+//     .prepare("select name from sqlite_master where type='table'")
+//     .all()
+//     .filter((table: { name: string }) => !table.name.startsWith('sqlite_'))
+//     .map((table: { name: string }) => table.name);
+// tables.forEach((table) => {
+//     logInfo(`Backing up ${table}`);
+//     db.exec(`drop table if exists ${table}_temp`);
+//     db.exec(`create table ${table}_temp as select * from ${table}`);
+//     db.exec(`drop table ${table}`);
+// });
+
+// logInfo('Running database initialization');
+// const setupScript = readFileSync(`${dbScriptDir}/dbsetup.sql`, 'utf-8');
+// db.exec(setupScript);
+
+// tables.forEach((table) => {
+//     logInfo(`Restoring ${table} from backup and cleaning up`);
+//     db.exec(`insert into ${table} select * from ${table}_temp`);
+//     db.exec(`drop table ${table}_temp`);
+// });
+// db.exec('pragma foreign_keys=on');
 
 export const sessionsDb: DB = new Database('sessions.db');
 
