@@ -8,6 +8,7 @@ import {
 import { logInfo } from '../../Logger';
 import { discordBotToken, discordCommandServerId } from '../../Environment';
 import { commandList } from './commands/CommandList';
+import buttonHandlers from './commands/components/ButtonList';
 
 export const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -37,14 +38,22 @@ const onReady = async (c: Client<true>) => {
 };
 
 const onInteraction = async (interaction: Interaction) => {
-    if (interaction.isCommand()) {
+    if (interaction.isChatInputCommand()) {
         commandList.forEach((command) => {
             if (interaction.commandName === command.data.name) {
                 command.run(interaction);
-                return false;
             }
-            return true;
         });
+    } else if (interaction.isButton()) {
+        const handler = buttonHandlers.get(interaction.customId);
+        if (handler) {
+            handler(interaction);
+        } else {
+            await interaction.reply({
+                content: 'You clicked an unknown button',
+                ephemeral: true,
+            });
+        }
     }
 };
 
