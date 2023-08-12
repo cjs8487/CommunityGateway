@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, copyFileSync } from 'fs';
 import Database, { Database as DB } from 'better-sqlite3';
 import { testing } from './Environment';
-import { logInfo, logVerbose } from './Logger';
+import { logError, logInfo, logVerbose } from './Logger';
 import { DynamicDataManager } from './database/DynamicDataManager';
 import { UserManager } from './database/UserManager';
 // eslint-disable-next-line import/no-cycle
@@ -23,7 +23,11 @@ import { DiscordDataManager } from './database/DiscordDataManager';
 // database to kept in sync during the dev cycle without making manual changes to it
 if (testing) {
     logInfo('copying database from backup');
-    copyFileSync('db backup.db', 'database.db');
+    try {
+        copyFileSync('db backup.db', 'database.db');
+    } catch {
+        logError('no database backup found to copy from');
+    }
 }
 
 const db: DB = testing

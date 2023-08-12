@@ -5,7 +5,12 @@
     "main": "index.js",
     "scripts": {
         "dev": "nodemon -e js,ts,json --files src/main.ts",
-        "run": "node src/main.ts"
+        "run": "node build/main.js",
+        "build": "tsc --project .",
+        "db:backup": "cp database.db db\\ backup.db",
+        "db:restore": "cp db\\ backup.db database.db",
+        "db:wipe": "rm database.db",
+        "db:full wipe": "rm database.db && rm db\\ backup.db"
     },
     "repository": {
         "type": "git",
