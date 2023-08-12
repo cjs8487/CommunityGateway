@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync, copyFileSync } from 'fs';
 import Database, { Database as DB } from 'better-sqlite3';
 import { testing } from './Environment';
 import { logInfo, logVerbose } from './Logger';
@@ -6,13 +6,7 @@ import { DynamicDataManager } from './database/DynamicDataManager';
 import { UserManager } from './database/UserManager';
 // eslint-disable-next-line import/no-cycle
 import { AsyncManager } from './database/AsyncManager';
-
-const db: DB = testing
-    ? new Database('database.db', { verbose: logVerbose })
-    : new Database('database.db');
-if (testing) {
-    logInfo('db verbose enabled');
-}
+import { DiscordDataManager } from './database/DiscordDataManager';
 
 // database setup
 // this setup sequence makes several assumptions
@@ -30,6 +24,14 @@ if (testing) {
 logInfo('starting database migration');
 if (testing) {
     logInfo('copying database from backup');
+    copyFileSync('db backup.db', 'database.db');
+}
+
+const db: DB = testing
+    ? new Database('database.db', { verbose: logVerbose })
+    : new Database('database.db');
+if (testing) {
+    logInfo('db verbose enabled');
 }
 
 const dbVersion: number = db.pragma('user_version', { simple: true });
@@ -43,10 +45,12 @@ migrationFileNames.forEach((migrationFileName, index) => {
     const script = readFileSync(`${dbScriptDir}/${migrationFileName}`, 'utf-8');
     db.exec(script);
 });
+const newVersion = migrationFileNames.length;
+db.pragma(`user_version=${newVersion}`);
+logInfo(`database migrated to v${newVersion}`);
 
 if (testing) {
     logInfo('un-migrating database by one version');
-    const newVersion: number = db.pragma('user_version', { simple: true });
     db.pragma(`user_version=${newVersion - 1}`);
 }
 
@@ -88,5 +92,6 @@ process.on('exit', () => db.close());
 export const userManager = new UserManager(db);
 export const dynamicDataManager = new DynamicDataManager(db);
 export const asyncManager = new AsyncManager(db);
+export const discordDataManager = new DiscordDataManager(db);
 
 export default {};
