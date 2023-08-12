@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { isAdmin, isAuthenticated } from '../../core/auth/AuthCore';
 import { dynamicDataManager } from '../../System';
 import types from './DataType';
+import { syncDataToMessages } from '../../bots/discord/modules/DataSync';
 
 const dynamicData = Router();
 
@@ -10,7 +11,12 @@ dynamicData.use(types);
 dynamicData.get('/:type', (req, res) => {
     const { type } = req.params;
     const data = dynamicDataManager.getAllData(type);
-    res.status(200).send(data);
+    res.status(200).send(
+        data.map((item) => ({
+            id: item.id,
+            data: JSON.parse(item.data),
+        })),
+    );
 });
 
 dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
@@ -22,6 +28,7 @@ dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
         return;
     }
     dynamicDataManager.insertData(type, JSON.stringify(data));
+    syncDataToMessages(typeName);
     res.status(200).send();
 });
 
@@ -33,11 +40,15 @@ dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
         res.status(400).send('Invalid id');
         return;
     }
-    const changes = dynamicDataManager.updateData(parsedId, JSON.stringify(data));
+    const changes = dynamicDataManager.updateData(
+        parsedId,
+        JSON.stringify(data),
+    );
     if (changes === 0) {
         res.sendStatus(404);
         return;
     }
+    syncDataToMessages(dynamicDataManager.getTypeForData(parsedId));
     res.status(200).send();
 });
 
@@ -53,6 +64,7 @@ dynamicData.delete('/:id', isAuthenticated, isAdmin, (req, res) => {
         res.status(404).send();
         return;
     }
+    syncDataToMessages(dynamicDataManager.getTypeForData(parsedId));
     res.status(200).send();
 });
 
