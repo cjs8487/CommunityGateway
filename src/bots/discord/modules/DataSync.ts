@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction } from 'discord.js';
+import { ChatInputCommandInteraction, bold, hideLinkEmbed } from 'discord.js';
 import { discordDataManager, dynamicDataManager } from '../../../System';
 import { editMessage } from '../util/MessageUtils';
 import { DynamicData } from '../../../database/DynamicDataManager';
@@ -12,14 +12,73 @@ export const formatDataToList = (data: DynamicData[], key: string): string => {
     return `- ${values.join('\n- ')}`;
 };
 
+export const formatDataToLabelLinkList = (
+    data: DynamicData[],
+    labelKey: string,
+    linkKey: string,
+) => {
+    const values: string[] = [];
+    data.forEach((item) => {
+        const parsedItem = JSON.parse(item.data);
+        values.push(
+            `${parsedItem[labelKey]}: ${hideLinkEmbed(parsedItem[linkKey])}`,
+        );
+    });
+    return `- ${values.join('\n- ')}`;
+};
+
+export const formatDataToGroupLabelLinkList = (
+    data: DynamicData[],
+    labelKey: string,
+    linkKey: string,
+    groupKey: string,
+) => {
+    const values: Map<string, string[]> = new Map();
+    data.forEach((item) => {
+        const parsedItem = JSON.parse(item.data);
+        const key = parsedItem[groupKey];
+        if (!values.has(key)) {
+            values.set(key, []);
+        }
+        values
+            .get(key)
+            ?.push(
+                `${parsedItem[labelKey]}: ${hideLinkEmbed(
+                    parsedItem[linkKey],
+                )}`,
+            );
+    });
+    const returnStrings: string[] = [];
+    values.forEach((group, key) => {
+        returnStrings.push(bold(key));
+        group.forEach((item) => {
+            returnStrings.push(` ${item}`);
+        });
+    });
+    return returnStrings.join('\n');
+};
+
 export const formatForType = (
     type: string,
     data: DynamicData[],
-    key: string,
+    keys: DataSyncKeys,
 ) => {
     switch (type) {
         case 'list':
-            return formatDataToList(data, key);
+            return formatDataToList(data, keys.key);
+        case 'labelLink':
+            return formatDataToLabelLinkList(
+                data,
+                keys.key,
+                keys.secondaryKey ?? '',
+            );
+        case 'groupLabelLink':
+            return formatDataToGroupLabelLinkList(
+                data,
+                keys.key,
+                keys.secondaryKey ?? '',
+                keys.groupKey ?? '',
+            );
         default:
             return 'Invalid data sync packet received. Unable to format data';
     }
@@ -50,7 +109,11 @@ export const syncDataToMessages = (type: string) => {
             const contents = formatForType(
                 target.format,
                 dynamicDataManager.getAllData(target.type),
-                target.key,
+                {
+                    key: target.key,
+                    secondaryKey: target.secondaryKey,
+                    groupKey: target.groupKey,
+                },
             );
             editMessage(target.guild, target.channel, message, contents);
         });

@@ -79,6 +79,6 @@ export class DynamicDataManager {
                     'join dynamic_data_types types on types.id = data.type ' +
                     'where data.id = ?',
             )
-            .get(id);
+            .get(id).name;
     }
 }

@@ -1,7 +1,11 @@
 import { SlashCommandBuilder, SlashCommandStringOption } from 'discord.js';
 import { Command } from './Command';
 import { discordDataManager, dynamicDataManager } from '../../../System';
-import { formatDataToList } from '../modules/DataSync';
+import {
+    formatDataToGroupLabelLinkList,
+    formatDataToLabelLinkList,
+    formatDataToList,
+} from '../modules/DataSync';
 
 const typeOption = new SlashCommandStringOption()
     .setName('type')
@@ -126,12 +130,66 @@ const data: Command = {
                     message.id,
                 );
             } else if (subcommand === 'label-and-link') {
-                await interaction.editReply(
-                    'Label and Link subcommand response',
+                const labelKey = interaction.options.getString(
+                    'label-key',
+                    true,
+                );
+                const linkKey = interaction.options.getString('link-key', true);
+                const requestedData = dynamicDataManager.getAllData(type);
+                if (requestedData.length === 0) {
+                    await interaction.editReply('No data found.');
+                    return;
+                }
+                const response = formatDataToLabelLinkList(
+                    requestedData,
+                    labelKey,
+                    linkKey,
+                );
+                const message = await interaction.editReply(response);
+                discordDataManager.saveDataSyncInfo(
+                    type,
+                    interaction.guildId ?? '',
+                    interaction.channelId,
+                    'labelLink',
+                    {
+                        key: labelKey,
+                        secondaryKey: linkKey,
+                    },
+                    message.id,
                 );
             } else if (subcommand === 'group-label-and-link') {
-                await interaction.editReply(
-                    'Group Label and Link subcommand response',
+                const labelKey = interaction.options.getString(
+                    'label-key',
+                    true,
+                );
+                const linkKey = interaction.options.getString('link-key', true);
+                const groupKey = interaction.options.getString(
+                    'group-key',
+                    true,
+                );
+                const requestedData = dynamicDataManager.getAllData(type);
+                if (requestedData.length === 0) {
+                    await interaction.editReply('No data found.');
+                    return;
+                }
+                const response = formatDataToGroupLabelLinkList(
+                    requestedData,
+                    labelKey,
+                    linkKey,
+                    groupKey,
+                );
+                const message = await interaction.editReply(response);
+                discordDataManager.saveDataSyncInfo(
+                    type,
+                    interaction.guildId ?? '',
+                    interaction.channelId,
+                    'groupLabelLink',
+                    {
+                        key: labelKey,
+                        secondaryKey: linkKey,
+                        groupKey,
+                    },
+                    message.id,
                 );
             }
         }

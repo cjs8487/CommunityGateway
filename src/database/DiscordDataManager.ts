@@ -34,9 +34,18 @@ export class DiscordDataManager {
     ) {
         const id = this.db
             .prepare(
-                'insert into dynamic_data_sync (type, guild, channel, format, main_key) values (?, ?, ?, ?, ?)',
+                'insert into dynamic_data_sync (type, guild, channel, format, main_key, secondary_key, group_key) ' +
+                    'values (?, ?, ?, ?, ?, ?, ?)',
             )
-            .run(dataType, guild, channel, format, keys.key).lastInsertRowid;
+            .run(
+                dataType,
+                guild,
+                channel,
+                format,
+                keys.key,
+                keys.secondaryKey,
+                keys.groupKey,
+            ).lastInsertRowid;
         messages.forEach((messageId) => {
             this.db
                 .prepare(
