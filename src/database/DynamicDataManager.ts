@@ -3,6 +3,7 @@ import { Database } from 'better-sqlite3';
 type DynamicDataType = {
     id: number;
     name: string;
+    shape: string;
 };
 
 export type DynamicData = {
@@ -49,10 +50,12 @@ export class DynamicDataManager {
             }));
     }
 
-    createType(name: string) {
+    createType(name: string, shape: string) {
         this.db
-            .prepare('insert into dynamic_data_types (name) values (?)')
-            .run(name);
+            .prepare(
+                'insert into dynamic_data_types (name, shape) values (?, ?)',
+            )
+            .run(name, shape);
     }
 
     getType(name: string): DynamicDataType {

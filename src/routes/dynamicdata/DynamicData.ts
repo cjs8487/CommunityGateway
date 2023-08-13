@@ -11,12 +11,13 @@ dynamicData.use(types);
 dynamicData.get('/:type', (req, res) => {
     const { type } = req.params;
     const data = dynamicDataManager.getAllData(type);
-    res.status(200).send(
-        data.map((item) => ({
+    res.status(200).send({
+        data: data.map((item) => ({
             id: item.id,
             data: JSON.parse(item.data),
         })),
-    );
+        shape: JSON.parse(dynamicDataManager.getType(type).shape),
+    });
 });
 
 dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {

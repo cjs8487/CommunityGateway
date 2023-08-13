@@ -15,4 +15,6 @@ create table if not exists dynamic_data_sync_messages (
     sync_id integer not null,
     message text not null,
     foreign key(sync_id) references dynamic_data_sync(id) on delete cascade
-)
+);
+
+alter table dynamic_data_types add column shape text not null default ""

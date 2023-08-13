@@ -10,8 +10,8 @@ types.get('/types', (req, res) => {
 });
 
 types.post('/types', isAuthenticated, isAdmin, (req, res) => {
-    const { name } = req.body;
-    dynamicDataManager.createType(name);
+    const { name, shape } = req.body;
+    dynamicDataManager.createType(name, JSON.stringify(shape));
     res.status(200).send();
 });
 
