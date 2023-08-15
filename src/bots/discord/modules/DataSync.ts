@@ -120,4 +120,9 @@ export const syncDataToMessages = (type: string) => {
     });
 };
 
+export const syncAll = () => {
+    const types = dynamicDataManager.getAllTypes();
+    types.forEach((type) => syncDataToMessages(type.name))
+}
+
 export default {};

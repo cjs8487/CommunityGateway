@@ -11,6 +11,7 @@ import { discordBotToken, discordCommandServerId } from '../../Environment';
 import { commandList } from './commands/CommandList';
 import buttonHandlers from './commands/components/ButtonList';
 import { editMessage } from './util/MessageUtils';
+import { syncAll } from './modules/DataSync';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
@@ -47,6 +48,7 @@ const onReady = async (c: Client<true>) => {
             (Date.now() / 1000) >>> 0,
         )}`,
     );
+    syncAll();
 
     logInfo(`Discord bot initialized and logged in as ${c.user.tag}`);
 };
