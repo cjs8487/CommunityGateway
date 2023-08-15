@@ -41,7 +41,8 @@ export class DynamicDataManager {
                 'select data.id, data.data ' +
                     'from dynamic_data data ' +
                     'join dynamic_data_types types on types.id = data.type ' +
-                    'where types.name=?',
+                    'where types.name=?' +
+                    'order by data.sort_val, data.id',
             )
             .all(type)
             .map((data) => ({
@@ -83,5 +84,11 @@ export class DynamicDataManager {
                     'where data.id = ?',
             )
             .get(id).name;
+    }
+
+    updateOrder(type: string, newOrder: number[]) {
+        newOrder.forEach((id, index) => {
+            this.db.prepare('update dynamic_data set sort_val=? where id=?').run(index, id)
+        })
     }
 }

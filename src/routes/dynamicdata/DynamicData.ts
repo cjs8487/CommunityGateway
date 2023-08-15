@@ -33,6 +33,14 @@ dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
     res.status(200).send();
 });
 
+dynamicData.post('/:typeName/syncOrder', isAuthenticated, isAdmin, (req, res) => {
+    const { typeName } = req.params;
+    const { order } = req.body;
+    dynamicDataManager.updateOrder(typeName, order);
+    syncDataToMessages(typeName);
+    res.status(200).send();
+});
+
 dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
