@@ -1,5 +1,9 @@
 import { ChatInputCommandInteraction, bold, hideLinkEmbed } from 'discord.js';
-import { discordDataManager, dynamicDataManager } from '../../../System';
+import {
+    discordDataManager,
+    dispatchManager,
+    dynamicDataManager,
+} from '../../../System';
 import { editMessage } from '../util/MessageUtils';
 import { DynamicData } from '../../../database/DynamicDataManager';
 import { DataSyncKeys } from '../../../database/DiscordDataManager';
@@ -102,27 +106,31 @@ export const registerNewSync = (
 };
 
 export const syncDataToMessages = (type: string) => {
-    const targets = discordDataManager.getDataSyncInfo(type);
-    targets.forEach((target) => {
-        target.messages.forEach((message) => {
-            // generate new message contents
-            const contents = formatForType(
-                target.format,
-                dynamicDataManager.getAllData(target.type),
-                {
-                    key: target.key,
-                    secondaryKey: target.secondaryKey,
-                    groupKey: target.groupKey,
-                },
-            );
-            editMessage(target.guild, target.channel, message, contents);
+    dispatchManager.pendRun(`syncDataToMessages${type}`, () => {
+        const targets = discordDataManager.getDataSyncInfo(type);
+        targets.forEach((target) => {
+            target.messages.forEach((message) => {
+                // generate new message contents
+                const contents = formatForType(
+                    target.format,
+                    dynamicDataManager.getAllData(target.type),
+                    {
+                        key: target.key,
+                        secondaryKey: target.secondaryKey,
+                        groupKey: target.groupKey,
+                    },
+                );
+                editMessage(target.guild, target.channel, message, contents);
+            });
         });
     });
 };
 
 export const syncAll = () => {
     const types = dynamicDataManager.getAllTypes();
-    types.forEach((type) => syncDataToMessages(type.name))
-}
+    types.forEach((type) => {
+        syncDataToMessages(type.name);
+    });
+};
 
 export default {};

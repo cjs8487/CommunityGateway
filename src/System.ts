@@ -7,6 +7,7 @@ import { UserManager } from './database/UserManager';
 // eslint-disable-next-line import/no-cycle
 import { AsyncManager } from './database/AsyncManager';
 import { DiscordDataManager } from './database/DiscordDataManager';
+import DispatchManager from './lib/DispatchManager';
 
 // database setup
 // this setup sequence makes several assumptions
@@ -80,6 +81,7 @@ process.on('SIGTERM', () => process.exit(128 + 15));
 // Ensure the database connection closes when the process terminates
 process.on('exit', () => db.close());
 
+export const dispatchManager = new DispatchManager();
 export const userManager = new UserManager(db);
 export const dynamicDataManager = new DynamicDataManager(db);
 export const asyncManager = new AsyncManager(db);
