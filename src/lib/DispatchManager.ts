@@ -17,11 +17,14 @@ const DELAY_MS = 2000;
  * There are several requirements for functions to dispatch correctly from here
  *  - The function must be the same for every run of a given key
  *  - The function should be pure (no program side effects)
+ *  - The function must be safe to have run multiple times per pend
  */
 class DispatchManager {
     pendingRuns: Map<string, NodeJS.Timeout>;
+    pendingFuncs: Map<string, RunFunction>;
     constructor() {
         this.pendingRuns = new Map();
+        this.pendingFuncs = new Map();
     }
 
     createWrappedCall(key: string, run: RunFunction): RunFunction {
@@ -45,6 +48,7 @@ class DispatchManager {
     clearPendingRun(key: string) {
         clearTimeout(this.pendingRuns.get(key));
         this.pendingRuns.delete(key);
+        this.pendingFuncs.delete(key);
     }
 
     clearAllPendingRuns() {
@@ -54,6 +58,14 @@ class DispatchManager {
 
     refreshAll() {
         this.pendingRuns.forEach((timeout) => timeout.refresh());
+    }
+
+    runNow(key: string) {
+        const func = this.pendingFuncs.get(key);
+        this.clearPendingRun(key);
+        if (func) {
+            func();
+        }
     }
 }
 
