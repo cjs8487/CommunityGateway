@@ -75,4 +75,19 @@ export class DiscordDataManager {
                     .map((message) => message.message),
             }));
     }
+
+    clearSyncForChannel(channel: string): string[] {
+        const messages = this.db
+            .prepare(
+                'select m.message ' +
+                    'from dynamic_data_sync s ' +
+                    'join dynamic_data_sync_messages m on s.id=m.sync_id ' +
+                    'where channel=?',
+            )
+            .all(channel);
+        this.db
+            .prepare('delete from dynamic_data_sync where channel=?')
+            .run(channel);
+        return messages;
+    }
 }

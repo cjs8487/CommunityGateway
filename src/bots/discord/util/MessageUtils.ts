@@ -17,4 +17,17 @@ export const editMessage = async (
     }
 };
 
-export default {};
+export const deleteMessage = async (
+    guildId: string,
+    channelId: string,
+    messageId: string,
+) => {
+    const guild = await client.guilds.fetch(guildId);
+    const channel = await guild.channels.fetch(channelId);
+    if (channel?.isTextBased()) {
+        const message = await channel.messages.fetch(messageId);
+        if (message.deletable) {
+            message.delete();
+        }
+    }
+};

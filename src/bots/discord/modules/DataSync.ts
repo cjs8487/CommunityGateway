@@ -4,7 +4,7 @@ import {
     dispatchManager,
     dynamicDataManager,
 } from '../../../System';
-import { editMessage } from '../util/MessageUtils';
+import { deleteMessage, editMessage } from '../util/MessageUtils';
 import { DynamicData } from '../../../database/DynamicDataManager';
 import { DataSyncKeys } from '../../../database/DiscordDataManager';
 
@@ -103,6 +103,20 @@ export const registerNewSync = (
         keys,
         ...messages,
     );
+};
+
+export const clearSync = (interaction: ChatInputCommandInteraction) => {
+    const messages = discordDataManager.clearSyncForChannel(
+        interaction.channelId,
+    );
+    messages.forEach((message) => {
+        deleteMessage(
+            interaction.guildId ?? '',
+            interaction.channelId,
+            message,
+        );
+    });
+    return messages.length;
 };
 
 export const syncDataToMessages = (type: string) => {

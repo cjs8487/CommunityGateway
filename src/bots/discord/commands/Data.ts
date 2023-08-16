@@ -2,6 +2,7 @@ import { SlashCommandBuilder, SlashCommandStringOption } from 'discord.js';
 import { Command } from './Command';
 import { discordDataManager, dynamicDataManager } from '../../../System';
 import {
+    clearSync,
     formatDataToGroupLabelLinkList,
     formatDataToLabelLinkList,
     formatDataToList,
@@ -101,13 +102,13 @@ const data: Command = {
                         .setName('clear')
                         .setDescription(
                             'Clears the sync properties of this channel',
-                        )
-                        .addStringOption(typeOption),
+                        ),
                 ),
         ),
     run: async (interaction) => {
-        await interaction.deferReply();
-        const type = interaction.options.getString('type', true);
+        const ephemeral = interaction.options.getSubcommand() === 'clear';
+        await interaction.deferReply({ ephemeral });
+        const type = interaction.options.getString('type') ?? '';
         if (interaction.options.getSubcommandGroup() === 'sync') {
             const subcommand = interaction.options.getSubcommand();
             if (subcommand === 'list') {
@@ -190,6 +191,11 @@ const data: Command = {
                         groupKey,
                     },
                     message.id,
+                );
+            } else if (subcommand === 'clear') {
+                const count = clearSync(interaction);
+                interaction.editReply(
+                    `Sync data for channel cleared. Deleted ${count} messages`,
                 );
             }
         }
