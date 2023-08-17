@@ -7,6 +7,7 @@ import {
     formatDataToLabelLinkList,
     formatDataToList,
 } from '../modules/DataSync';
+import { smartSplit } from '../util/MessageUtils';
 
 const typeOption = new SlashCommandStringOption()
     .setName('type')
@@ -106,8 +107,8 @@ const data: Command = {
                 ),
         ),
     run: async (interaction) => {
-        const ephemeral = interaction.options.getSubcommand() === 'clear';
-        await interaction.deferReply({ ephemeral });
+        // const ephemeral = interaction.options.getSubcommand() === 'clear';
+        await interaction.deferReply({ ephemeral: true });
         const type = interaction.options.getString('type') ?? '';
         if (interaction.options.getSubcommandGroup() === 'sync') {
             const subcommand = interaction.options.getSubcommand();
@@ -119,16 +120,24 @@ const data: Command = {
                     return;
                 }
                 const response = formatDataToList(requestedData, key);
-                const message = await interaction.editReply(response);
-                discordDataManager.saveDataSyncInfo(
-                    type,
-                    interaction.guildId ?? '',
-                    interaction.channelId,
-                    'list',
-                    {
-                        key,
-                    },
-                    message.id,
+                const responseList = smartSplit(response);
+                responseList.forEach(async (content) => {
+                    const message = await interaction.channel?.send({
+                        content,
+                    });
+                    discordDataManager.saveDataSyncInfo(
+                        type,
+                        interaction.guildId ?? '',
+                        interaction.channelId,
+                        'list',
+                        {
+                            key,
+                        },
+                        message?.id ?? '',
+                    );
+                });
+                await interaction.editReply(
+                    `Success. Created ${responseList.length} messages.`,
                 );
             } else if (subcommand === 'label-and-link') {
                 const labelKey = interaction.options.getString(
@@ -146,17 +155,25 @@ const data: Command = {
                     labelKey,
                     linkKey,
                 );
-                const message = await interaction.editReply(response);
-                discordDataManager.saveDataSyncInfo(
-                    type,
-                    interaction.guildId ?? '',
-                    interaction.channelId,
-                    'labelLink',
-                    {
-                        key: labelKey,
-                        secondaryKey: linkKey,
-                    },
-                    message.id,
+                const responseList = smartSplit(response);
+                responseList.forEach(async (content) => {
+                    const message = await interaction.channel?.send({
+                        content,
+                    });
+                    discordDataManager.saveDataSyncInfo(
+                        type,
+                        interaction.guildId ?? '',
+                        interaction.channelId,
+                        'list',
+                        {
+                            key: labelKey,
+                            secondaryKey: linkKey,
+                        },
+                        message?.id ?? '',
+                    );
+                });
+                await interaction.editReply(
+                    `Success. Created ${responseList.length} messages.`,
                 );
             } else if (subcommand === 'group-label-and-link') {
                 const labelKey = interaction.options.getString(
@@ -179,18 +196,26 @@ const data: Command = {
                     linkKey,
                     groupKey,
                 );
-                const message = await interaction.editReply(response);
-                discordDataManager.saveDataSyncInfo(
-                    type,
-                    interaction.guildId ?? '',
-                    interaction.channelId,
-                    'groupLabelLink',
-                    {
-                        key: labelKey,
-                        secondaryKey: linkKey,
-                        groupKey,
-                    },
-                    message.id,
+                const responseList = smartSplit(response);
+                responseList.forEach(async (content) => {
+                    const message = await interaction.channel?.send({
+                        content,
+                    });
+                    discordDataManager.saveDataSyncInfo(
+                        type,
+                        interaction.guildId ?? '',
+                        interaction.channelId,
+                        'list',
+                        {
+                            key: labelKey,
+                            secondaryKey: linkKey,
+                            groupKey,
+                        },
+                        message?.id ?? '',
+                    );
+                });
+                await interaction.editReply(
+                    `Success. Created ${responseList.length} messages.`,
                 );
             } else if (subcommand === 'clear') {
                 const count = clearSync(interaction);

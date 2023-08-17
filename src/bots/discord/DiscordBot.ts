@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import {
     Client,
     GatewayIntentBits,
@@ -77,17 +78,6 @@ export const init = async () => {
     client.once('ready', onReady);
     client.login(discordBotToken);
     client.on('interactionCreate', onInteraction);
-    // const channel = await (
-    //     await client.guilds.fetch('1137917791190650911')
-    // ).channels.fetch('1137917792373448726');
-    // if (channel?.isTextBased()) {
-    //     (await channel.messages.fetch('1138675653894484003')).edit(
-    //         `Bot launched at ${time(
-    //             // eslint-disable-next-line no-bitwise
-    //             (Date.now() / 1000) >>> 0,
-    //         )}`,
-    //     );
-    // }
 };
 
 export default {};
