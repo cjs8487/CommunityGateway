@@ -1,4 +1,8 @@
-import { MessageEditOptions, MessagePayload } from 'discord.js';
+import {
+    MessageCreateOptions,
+    MessageEditOptions,
+    MessagePayload,
+} from 'discord.js';
 import { client } from '../DiscordBot';
 
 export const editMessage = async (
@@ -30,6 +34,19 @@ export const deleteMessage = async (
             message.delete();
         }
     }
+};
+
+export const sendMessage = async (
+    guildId: string,
+    channelId: string,
+    message: string | MessagePayload | MessageCreateOptions,
+) => {
+    const guild = await client.guilds.fetch(guildId);
+    const channel = await guild.channels.fetch(channelId);
+    if (channel?.isTextBased()) {
+        return channel.send(message);
+    }
+    return undefined;
 };
 
 const MAX_CHAR = 2000;

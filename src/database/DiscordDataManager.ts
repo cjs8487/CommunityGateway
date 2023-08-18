@@ -1,6 +1,7 @@
 import { Database } from 'better-sqlite3';
 
 export type DataSyncInfo = {
+    id: number;
     type: string;
     guild: string;
     channel: string;
@@ -60,6 +61,7 @@ export class DiscordDataManager {
             .prepare('select * from dynamic_data_sync where type=?')
             .all(type)
             .map((info) => ({
+                id: info.id,
                 type: info.type,
                 guild: info.guild,
                 channel: info.channel,
@@ -89,5 +91,13 @@ export class DiscordDataManager {
             .prepare('delete from dynamic_data_sync where channel=?')
             .run(channel);
         return messages;
+    }
+
+    addMessageToSyncGroup(syncId: number, messageId: string) {
+        this.db
+            .prepare(
+                'insert into dynamic_data_sync_messages (sync_id, message) values (?, ?)',
+            )
+            .run(syncId, messageId);
     }
 }

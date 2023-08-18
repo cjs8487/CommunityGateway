@@ -4,7 +4,12 @@ import {
     dispatchManager,
     dynamicDataManager,
 } from '../../../System';
-import { deleteMessage, editMessage } from '../util/MessageUtils';
+import {
+    deleteMessage,
+    editMessage,
+    sendMessage,
+    smartSplit,
+} from '../util/MessageUtils';
 import { DynamicData } from '../../../database/DynamicDataManager';
 import { DataSyncKeys } from '../../../database/DiscordDataManager';
 
@@ -123,19 +128,59 @@ export const syncDataToMessages = (type: string) => {
     dispatchManager.pendRun(`syncDataToMessages${type}`, () => {
         const targets = discordDataManager.getDataSyncInfo(type);
         targets.forEach((target) => {
-            target.messages.forEach((message) => {
-                // generate new message contents
-                const contents = formatForType(
-                    target.format,
-                    dynamicDataManager.getAllData(target.type),
-                    {
-                        key: target.key,
-                        secondaryKey: target.secondaryKey,
-                        groupKey: target.groupKey,
-                    },
-                );
-                editMessage(target.guild, target.channel, message, contents);
-            });
+            const contents = formatForType(
+                target.format,
+                dynamicDataManager.getAllData(target.type),
+                {
+                    key: target.key,
+                    secondaryKey: target.secondaryKey,
+                    groupKey: target.groupKey,
+                },
+            );
+            const responseList = smartSplit(contents);
+            if (responseList.length >= target.messages.length) {
+                responseList.forEach(async (response, index) => {
+                    if (index < responseList.length) {
+                        editMessage(
+                            target.guild,
+                            target.channel,
+                            target.messages[index],
+                            response,
+                        );
+                    } else {
+                        const message = await sendMessage(
+                            target.guild,
+                            target.channel,
+                            response,
+                        );
+                        if (!message) {
+                            // TODO: ASYNC ERROR REPORTING?
+                            return;
+                        }
+                        discordDataManager.addMessageToSyncGroup(
+                            target.id,
+                            message.id,
+                        );
+                    }
+                });
+            } else {
+                target.messages.forEach(async (message, index) => {
+                    if (index < responseList.length) {
+                        editMessage(
+                            target.guild,
+                            target.channel,
+                            message,
+                            responseList[index],
+                        );
+                    } else {
+                        await deleteMessage(
+                            target.guild,
+                            target.channel,
+                            message,
+                        );
+                    }
+                });
+            }
         });
     });
 };
