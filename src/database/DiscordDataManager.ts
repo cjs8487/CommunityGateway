@@ -100,4 +100,12 @@ export class DiscordDataManager {
             )
             .run(syncId, messageId);
     }
+
+    channelHasSyncGroup(channel: string) {
+        return (
+            this.db
+                .prepare('select * from dynamic_data_sync where channel=?')
+                .all(channel).length > 0
+        );
+    }
 }

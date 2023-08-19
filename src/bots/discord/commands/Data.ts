@@ -112,6 +112,19 @@ const data: Command = {
         const type = interaction.options.getString('type') ?? '';
         if (interaction.options.getSubcommandGroup() === 'sync') {
             const subcommand = interaction.options.getSubcommand();
+            if (subcommand !== 'split') {
+                if (
+                    discordDataManager.channelHasSyncGroup(
+                        interaction.channelId,
+                    )
+                ) {
+                    interaction.editReply(
+                        'This channel is already configured for data sync. ' +
+                            'A channel can only be registered for one data sync',
+                    );
+                    return;
+                }
+            }
             if (subcommand === 'list') {
                 const key = interaction.options.getString('key', true);
                 const requestedData = dynamicDataManager.getAllData(type);

@@ -108,3 +108,4 @@ dist
 
 static/*
 build/*
+.vscode/
