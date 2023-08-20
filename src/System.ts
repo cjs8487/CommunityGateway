@@ -22,15 +22,6 @@ import DispatchManager from './lib/DispatchManager';
 // file, and the sequence will set the stored version back by one. It is assumed that the backup
 // will always be the result of the second to last migration script being run. This allows the
 // database to kept in sync during the dev cycle without making manual changes to it
-if (testing) {
-    logInfo('copying database from backup');
-    try {
-        copyFileSync('db backup.db', 'database.db');
-    } catch {
-        logError('no database backup found to copy from');
-    }
-}
-
 const db: DB = testing
     ? new Database('database.db', { verbose: logVerbose })
     : new Database('database.db');
@@ -45,6 +36,14 @@ const migrationFileNames = readdirSync(dbScriptDir).sort((a, b) =>
 );
 if (migrationFileNames.length > dbVersion) {
     logInfo('starting database migration');
+    if (testing) {
+        logInfo('copying database from backup');
+        try {
+            copyFileSync('db backup.db', 'database.db');
+        } catch {
+            logError('no database backup found to copy from');
+        }
+    }
     // we'll always back up the database before runnning any migrations
     // if we're in a dev environment, this is essentially a no-op, since we just copied the backup to the real database
     // if we're in production, it'll make a backup of the (theoretically) last known good database (there is a edge
