@@ -1,6 +1,6 @@
-import axios, { isAxiosError } from 'axios';
-import { NextFunction, Router } from 'express';
 import { createHash } from 'crypto';
+import axios, { isAxiosError } from 'axios';
+import { Router } from 'express';
 import { logError, logWarn } from '../../Logger';
 import { exchangeCode } from '../../core/auth/DiscordTokens';
 import { discordClientId, discordRedirect } from '../../Environment';
@@ -19,11 +19,13 @@ discordAuth.get('/doauth', (req, res) => {
     const sessionHash = createHash('sha256');
     sessionHash.update(req.session.id);
     const state = sessionHash.digest('base64url');
+    const { target } = req.query;
     req.session.state = state;
+    req.session.target = target?.toString();
     res.redirect(`${authUrl}&state=${state}`);
 });
 
-discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
+discordAuth.get('/redirect', async (req, res, next) => {
     const code = req.query.code as string;
     const state = req.query.state as string;
     if (state !== req.session.state) {
@@ -72,6 +74,7 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
         }
 
         // load data into session and send
+        const { target } = req.session;
         req.session.regenerate((err) => {
             if (err) next(err);
 
@@ -80,7 +83,11 @@ discordAuth.get('/redirect', async (req, res, next: NextFunction) => {
 
             req.session.save((saveErr) => {
                 if (saveErr) next(saveErr);
-                res.redirect('/');
+                if (target) {
+                    res.redirect(target);
+                } else {
+                    res.redirect('/');
+                }
             });
         });
     } catch (e) {

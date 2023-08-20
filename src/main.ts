@@ -13,6 +13,7 @@ declare module 'express-session' {
     interface SessionData {
         loggedIn: boolean;
         state?: string;
+        target?: string;
         user?: number;
     }
 }
