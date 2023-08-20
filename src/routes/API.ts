@@ -7,6 +7,7 @@ import { isAuthenticated, logout } from '../core/auth/AuthCore';
 import discordAuth from './auth/DiscordAuth';
 import dynamicData from './dynamicdata/DynamicData';
 import asyncs from './asyncs/AsyncList';
+import files from './files/Files';
 
 const api = Router();
 
@@ -72,5 +73,6 @@ api.get('/logout', isAuthenticated, logout);
 api.use('/dynamicdata', dynamicData);
 api.use('/asyncs', asyncs);
 api.use('/auth/discord', discordAuth);
+api.use('/files', files);
 
 export default api;

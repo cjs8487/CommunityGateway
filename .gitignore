@@ -106,6 +106,7 @@ dist
 # Databases
 *.db
 
-static/*
-build/*
+static/
+build/
 .vscode/
+files/

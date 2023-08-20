@@ -55,6 +55,13 @@ app.use(
 app.use('/api', api);
 
 app.use(express.static('static'));
+app.use(express.static('files'));
+
+app.get('/files/*', (req, res) => {
+    logInfo(`Client File Request ${req.path}`);
+    const filePath = decodeURI(req.url.split('/files')[1]);
+    res.sendFile(path.join(__dirname, '../files', filePath));
+});
 
 app.get('/*', (req, res) => {
     logInfo(`Client Request ${req.path}`);
