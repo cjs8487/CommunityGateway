@@ -73,9 +73,9 @@ export class UserManager {
                 if (!user.authData) {
                     user.authData = {};
                 }
-                user.authData.discordToken = await refreshToken(
-                    userData.refreshToken,
-                );
+                const token = await refreshToken(userData.refreshToken);
+                this.updateDiscordAuth(userData.id, token);
+                user.authData.discordToken = token;
             } catch (e) {
                 let errorMessage = 'Error creating user from database cache - ';
                 let log = true;
