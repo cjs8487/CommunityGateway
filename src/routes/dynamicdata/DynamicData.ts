@@ -10,19 +10,29 @@ dynamicData.use(types);
 
 dynamicData.get('/:type', (req, res) => {
     const { type } = req.params;
+    const { withShape } = req.query;
     const data = dynamicDataManager.getAllData(type);
     const typeObj = dynamicDataManager.getType(type);
     if (!typeObj) {
         res.status(404).send();
         return;
     }
-    res.status(200).send({
-        data: data.map((item) => ({
-            id: item.id,
-            data: JSON.parse(item.data),
-        })),
-        shape: JSON.parse(typeObj.shape),
-    });
+    if (withShape) {
+        res.status(200).send({
+            data: data.map((item) => ({
+                id: item.id,
+                data: JSON.parse(item.data),
+            })),
+            shape: JSON.parse(typeObj.shape),
+        });
+    } else {
+        res.status(200).send(
+            data.map((item) => ({
+                id: item.id,
+                data: JSON.parse(item.data),
+            })),
+        );
+    }
 });
 
 dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
