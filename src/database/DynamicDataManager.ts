@@ -59,7 +59,7 @@ export class DynamicDataManager {
             .run(name, shape);
     }
 
-    getType(name: string): DynamicDataType {
+    getType(name: string): DynamicDataType | undefined {
         return this.db
             .prepare('select * from dynamic_data_types where name=?')
             .get(name);
@@ -88,7 +88,9 @@ export class DynamicDataManager {
 
     updateOrder(type: string, newOrder: number[]) {
         newOrder.forEach((id, index) => {
-            this.db.prepare('update dynamic_data set sort_val=? where id=?').run(index, id)
-        })
+            this.db
+                .prepare('update dynamic_data set sort_val=? where id=?')
+                .run(index, id);
+        });
     }
 }

@@ -11,12 +11,17 @@ dynamicData.use(types);
 dynamicData.get('/:type', (req, res) => {
     const { type } = req.params;
     const data = dynamicDataManager.getAllData(type);
+    const typeObj = dynamicDataManager.getType(type);
+    if (!typeObj) {
+        res.status(404).send();
+        return;
+    }
     res.status(200).send({
         data: data.map((item) => ({
             id: item.id,
             data: JSON.parse(item.data),
         })),
-        shape: JSON.parse(dynamicDataManager.getType(type).shape),
+        shape: JSON.parse(typeObj.shape),
     });
 });
 
@@ -33,13 +38,18 @@ dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
     res.status(200).send();
 });
 
-dynamicData.post('/:typeName/syncOrder', isAuthenticated, isAdmin, (req, res) => {
-    const { typeName } = req.params;
-    const { order } = req.body;
-    dynamicDataManager.updateOrder(typeName, order);
-    syncDataToMessages(typeName);
-    res.status(200).send();
-});
+dynamicData.post(
+    '/:typeName/syncOrder',
+    isAuthenticated,
+    isAdmin,
+    (req, res) => {
+        const { typeName } = req.params;
+        const { order } = req.body;
+        dynamicDataManager.updateOrder(typeName, order);
+        syncDataToMessages(typeName);
+        res.status(200).send();
+    },
+);
 
 dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
     const { id } = req.params;
