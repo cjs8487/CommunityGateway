@@ -5,7 +5,7 @@ import SqliteStore from 'better-sqlite3-session-store';
 import { logInfo } from './Logger';
 import api from './routes/API';
 import { sessionSecret, testing } from './Environment';
-import { sessionsDb } from './System';
+import { fileManager, sessionsDb } from './System';
 import { init } from './bots/discord/DiscordBot';
 
 // redeclare express-session so that we can add our own types to the session data interface
@@ -55,11 +55,20 @@ app.use(
 app.use('/api', api);
 
 app.use(express.static('static'));
-app.use(express.static('files'));
 
-app.get('/files/*', (req, res) => {
+app.get('/files/:fileId', (req, res) => {
     logInfo(`Client File Request ${req.path}`);
-    const filePath = decodeURI(req.url.split('/files')[1]);
+    const { fileId } = req.params;
+    const fileIdNum = Number(fileId);
+    if (Number.isNaN(fileIdNum)) {
+        res.status(400).send('Invalid file');
+    }
+    const file = fileManager.getFile(fileIdNum);
+    if (!file) {
+        res.status(404).send();
+        return;
+    }
+    const filePath = `/${file.path}/${file.name}`;
     res.sendFile(path.join(__dirname, '../files', filePath));
 });
 

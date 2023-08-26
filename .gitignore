@@ -109,4 +109,4 @@ dist
 static/
 build/
 .vscode/
-files/
+/files/
