@@ -10,6 +10,7 @@ import { DiscordDataManager } from './database/DiscordDataManager';
 import DispatchManager from './lib/DispatchManager';
 import { FileManager } from './database/FileManager';
 import { loadFilesFromDisk } from './database/DatabaseCore';
+import { SecurityManager } from './database/SecurityManager';
 
 // database setup
 // this setup sequence makes several assumptions
@@ -88,6 +89,7 @@ export const dynamicDataManager = new DynamicDataManager(db);
 export const asyncManager = new AsyncManager(db);
 export const discordDataManager = new DiscordDataManager(db);
 export const fileManager = new FileManager(db);
+export const securityManager = new SecurityManager(db);
 
 loadFilesFromDisk();
 
