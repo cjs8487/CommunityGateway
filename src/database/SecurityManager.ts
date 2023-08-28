@@ -13,6 +13,12 @@ export type SecurityRole = {
     points: SecurityPoint[];
 };
 
+const permissions = [
+    'Manage Dynamic Data',
+    'Manage Asyncs',
+    'Manage Content Pages',
+];
+
 export class SecurityManager {
     db: Database;
 
@@ -40,11 +46,18 @@ export class SecurityManager {
     }
 
     createRole(roleId: string) {
-        this.db
+        const newRole = this.db
             .prepare(
                 'insert into security_roles (role_id, enabled) values (?, 1)',
             )
-            .run(roleId);
+            .run(roleId).lastInsertRowid;
+        permissions.forEach((permission) => {
+            this.db
+                .prepare(
+                    'insert into security_points (role, permission, enabled) values (?, ?, 1)',
+                )
+                .run(newRole, permission);
+        });
     }
 
     deleteRole(id: number) {

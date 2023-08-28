@@ -98,10 +98,6 @@ security.post(
             res.status(400).send('Invalid security role id');
             return;
         }
-        if (!securityManager.roleExists(pointId)) {
-            res.status(404).send();
-            return;
-        }
         securityManager.setPointEnabled(pointId, enabled);
     },
 );
