@@ -1,4 +1,8 @@
 import { Database } from 'better-sqlite3';
+import axios from 'axios';
+import { Guild, Role } from '../lib/DiscordTypes';
+import { discordApiRoot, discordBotToken, discordServer } from '../Environment';
+import { logInfo } from '../Logger';
 
 export type SecurityPoint = {
     id: number;
@@ -22,8 +26,70 @@ const permissions = [
 export class SecurityManager {
     db: Database;
 
+    allRoles: Role[] = [];
+    availableRoles: Role[] = [];
+
     constructor(db: Database) {
         this.db = db;
+
+        // role initialization
+        const res = axios.get<Guild>(
+            `${discordApiRoot}/guilds/${discordServer}`,
+            {
+                headers: {
+                    Authorization: `Bot ${discordBotToken}`,
+                },
+            },
+        );
+
+        // asynchronous initialization - this information isn't needed
+        // immediately following initialization but is utilized later and during
+        // normal program runtime operations
+        res.then(({ data: guild }) => {
+            logInfo('Security Manager Entering Second Phase Initialization');
+            this.allRoles = guild.roles.filter(
+                (role) => !role.managed && role.name !== '@everyone',
+            );
+
+            const allRoleIds = this.allRoles.map((role) => role.id);
+            const assignedRoles: string[] = [];
+            this.getAllRoles().forEach((role) => {
+                if (!allRoleIds.includes(role.roleId)) {
+                    logInfo(
+                        `Deleting stale role ${role.id} from security mapping`,
+                    );
+                    this.deleteRole(role.id);
+                    return;
+                }
+                const foundPoints: string[] = [];
+                role.points.forEach((point) => {
+                    if (!permissions.includes(point.permission)) {
+                        logInfo(
+                            `Deleting state permission ${point.permission} from security role ${role.id}`,
+                        );
+                        this.db
+                            .prepare('delete from security_points where id=?')
+                            .run(point.id);
+                    }
+                    foundPoints.push(point.permission);
+                });
+                permissions.forEach((permission) => {
+                    if (!foundPoints.includes(permission)) {
+                        this.db
+                            .prepare(
+                                'insert into security_points (role, permission, enabled) values (?, ?, 1)',
+                            )
+                            .run(role.id, permission);
+                    }
+                });
+                assignedRoles.push(role.roleId);
+            });
+
+            this.availableRoles = this.allRoles.filter(
+                (role) => !assignedRoles.includes(role.id),
+            );
+            logInfo('Security Manager Second Phase Initialization complete');
+        });
     }
 
     getAllRoles(): SecurityRole[] {
@@ -45,6 +111,25 @@ export class SecurityManager {
             }));
     }
 
+    getRole(id: number): SecurityRole {
+        const role = this.db
+            .prepare('select * from security_roles where id=?')
+            .get(id);
+        return {
+            id: role.id,
+            roleId: role.role_id,
+            enabled: !!role.enabled,
+            points: this.db
+                .prepare('select * from security_points where role=?')
+                .all(role.id)
+                .map((point) => ({
+                    id: point.id,
+                    permission: point.permission,
+                    enabled: !!point.enabled,
+                })),
+        };
+    }
+
     createRole(roleId: string) {
         const newRole = this.db
             .prepare(
@@ -58,9 +143,20 @@ export class SecurityManager {
                 )
                 .run(newRole, permission);
         });
+        this.availableRoles.splice(
+            this.availableRoles.findIndex((role) => role.id === roleId),
+            1,
+        );
     }
 
     deleteRole(id: number) {
+        const oldRole = this.getRole(id);
+        const pushRole = this.allRoles.find(
+            (role) => role.id === oldRole.roleId,
+        );
+        if (pushRole) {
+            this.availableRoles.push(pushRole);
+        }
         this.db.prepare('delete from security_roles where id=?').run(id);
     }
 
@@ -95,5 +191,16 @@ export class SecurityManager {
         this.db
             .prepare('update security_roles set role_id=? where id=?')
             .run(role, id);
+    }
+
+    roleIsValid(roleId: string) {
+        if (!this.availableRoles.find((role) => role.id === roleId)) {
+            return false;
+        }
+        return true;
+    }
+
+    getDiscordRole(id: string) {
+        return this.allRoles.find((role) => role.id === id);
     }
 }

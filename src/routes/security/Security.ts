@@ -1,38 +1,35 @@
 import { Router } from 'express';
-import axios from 'axios';
 import { securityManager } from '../../System';
-import {
-    discordApiRoot,
-    discordBotToken,
-    discordServer,
-} from '../../Environment';
-import { Guild } from '../../lib/DiscordTypes';
 import { isAdmin, isAuthenticated } from '../../core/auth/AuthCore';
 
 const security = Router();
 
 security.get('/', (req, res) => {
-    const roles = securityManager.getAllRoles();
+    const roles = securityManager.getAllRoles().map((role) => ({
+        id: role.id,
+        role: securityManager.getDiscordRole(role.roleId),
+        enabled: role.enabled,
+        points: role.points,
+    }));
     res.status(200).send(roles);
 });
 
 security.get('/roles', isAuthenticated, isAdmin, async (req, res) => {
-    const { data: guild } = await axios.get<Guild>(
-        `${discordApiRoot}/guilds/${discordServer}`,
-        {
-            headers: {
-                Authorization: `Bot ${discordBotToken}`,
-            },
-        },
-    );
-    const roles = guild.roles
-        .filter((role) => !role.managed && role.name !== '@everyone')
-        .map((role) => ({ id: role.id, name: role.name }));
+    const roles = securityManager.availableRoles.map((role) => ({
+        id: role.id,
+        name: role.name,
+    }));
     res.status(200).send(roles);
 });
 
 security.post('/', isAuthenticated, isAdmin, (req, res) => {
     const { role } = req.body;
+    if (!securityManager.roleIsValid(role)) {
+        res.status(400).send(
+            'Security Role already exists for this Discord Role',
+        );
+        return;
+    }
     securityManager.createRole(role);
     res.status(200).send();
 });
@@ -60,6 +57,12 @@ security.post(
     (req, res) => {
         const { role } = req.params;
         const { discordRole } = req.body;
+        if (!securityManager.roleIsValid(discordRole)) {
+            res.status(400).send(
+                'Security Role already exists for this Discord Role',
+            );
+            return;
+        }
         const roleId = Number(role);
         if (Number.isNaN(roleId)) {
             res.status(400).send('Invalid role id');
