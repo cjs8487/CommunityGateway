@@ -1,8 +1,10 @@
 import { Database } from 'better-sqlite3';
 import axios from 'axios';
-import { Guild, Role } from '../lib/DiscordTypes';
+import { Guild, GuildMember, Role } from '../lib/DiscordTypes';
 import { discordApiRoot, discordBotToken, discordServer } from '../Environment';
 import { logInfo } from '../Logger';
+import { userManager } from '../System';
+import { User } from './UserManager';
 
 export type SecurityPoint = {
     id: number;
@@ -28,6 +30,8 @@ export class SecurityManager {
 
     allRoles: Role[] = [];
     availableRoles: Role[] = [];
+
+    securityCache: Map<number, string[]>;
 
     constructor(db: Database) {
         this.db = db;
@@ -90,6 +94,38 @@ export class SecurityManager {
             );
             logInfo('Security Manager Second Phase Initialization complete');
         });
+
+        // synchronous initialization - this is data that may be needed right
+        // away by any other part of the application. The crucial part of this
+        // is the security cache which manages permission checks
+        //
+        // tech note - this is technically an asynchronous block
+        this.securityCache = new Map();
+        userManager.users.forEach(async (user) => {
+            this.setGrantsForUser(user);
+        });
+    }
+
+    async setGrantsForUser(user: User) {
+        const { data: discordUser } = await axios.get<GuildMember>(
+            `${discordApiRoot}/guilds/${discordServer}/members/${user.discordId}`,
+            {
+                headers: {
+                    Authorization: `Bot ${discordBotToken}`,
+                },
+            },
+        );
+        const grants: string[] = [];
+        discordUser.roles.forEach((roleId) => {
+            const role = this.getRoleForDiscordRole(roleId);
+            role.points.forEach((point) => {
+                if (grants.length === permissions.length) return;
+                if (point.enabled && !grants.includes(point.permission)) {
+                    grants.push(point.permission);
+                }
+            });
+        });
+        this.securityCache.set(user.id, grants);
     }
 
     getAllRoles(): SecurityRole[] {
@@ -115,6 +151,25 @@ export class SecurityManager {
         const role = this.db
             .prepare('select * from security_roles where id=?')
             .get(id);
+        return {
+            id: role.id,
+            roleId: role.role_id,
+            enabled: !!role.enabled,
+            points: this.db
+                .prepare('select * from security_points where role=?')
+                .all(role.id)
+                .map((point) => ({
+                    id: point.id,
+                    permission: point.permission,
+                    enabled: !!point.enabled,
+                })),
+        };
+    }
+
+    getRoleForDiscordRole(roleId: string): SecurityRole {
+        const role = this.db
+            .prepare('select * from security_roles where roleId=?')
+            .get(roleId);
         return {
             id: role.id,
             roleId: role.role_id,

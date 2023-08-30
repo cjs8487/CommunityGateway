@@ -6,7 +6,8 @@ import {
 } from '../Environment';
 import { DiscordToken } from '../core/auth/DiscordTokens';
 import { DiscordUser, GuildMember } from './DiscordTypes';
-import { userManager } from '../System';
+import { securityManager, userManager } from '../System';
+import { User } from '../database/UserManager';
 
 export const hasAdminRoles = async (token: DiscordToken): Promise<boolean> => {
     const { data } = await axios.get<GuildMember>(
@@ -31,6 +32,7 @@ export const getOrCreateUser = async (
         userManager.updateDiscordAuth(user.id, discordToken);
         userManager.clearRefresh(user.id);
         userManager.setAdmin(user.id, admin);
+        securityManager.setGrantsForUser(user);
         return user;
     }
     return userManager.registerUser(
@@ -41,6 +43,15 @@ export const getOrCreateUser = async (
         admin,
         { discordToken },
     );
+};
+
+export const userHasGrant = (user: User, grant: string) => {
+    if (user.isAdmin) return true;
+    const grants = securityManager.securityCache.get(user.id);
+    if (!grants) {
+        return false;
+    }
+    return grants.includes(grant);
 };
 
 export default {};
