@@ -1,8 +1,23 @@
 import { open, writeFileSync } from 'fs';
-import { Router } from 'express';
-import { fileManager } from '../../System';
+import { RequestHandler, Router } from 'express';
+import { fileManager, userManager } from '../../System';
+import { isAuthenticated } from '../../core/auth/AuthCore';
+import { userHasGrant } from '../../lib/UserLib';
 
 const files = Router();
+
+const hasFileEditPermissions: RequestHandler = (req, res, next) => {
+    if (!req.session.user) {
+        res.sendStatus(401);
+        return;
+    }
+    const user = userManager.getUser(req.session.user);
+    if (!userHasGrant(user, 'Manage Content Pages')) {
+        res.sendStatus(401);
+        return;
+    }
+    next();
+};
 
 files.get('/', (req, res) => {
     const fileList = fileManager.getAllFiles();
@@ -21,15 +36,26 @@ files.get('/:path/count', (req, res) => {
     res.status(200).send(fileList.length);
 });
 
+files.use(isAuthenticated, hasFileEditPermissions);
+
 files.post('/:path', (req, res) => {
     const { path } = req.params;
-    const { name } = req.body;
+    const { name, content } = req.body;
     if (!name) {
         res.status(400).send('File name not provided');
     }
-    fileManager.createFile(name, path);
-    open(`files/${path}/${name}`, 'w', () => {});
-    res.status(201).send();
+    if (fileManager.fileWithNameExistsInPath(name, path)) {
+        res.status(400).send('File with that name already exists');
+        return;
+    }
+    const id = fileManager.createFile(name, path);
+    if (!content) {
+        open(`files/${path}/${name}`, 'w', () => {});
+    } else {
+        writeFileSync(`files/${path}/${name}`, content);
+    }
+
+    res.status(201).send({ id });
 });
 
 files.post('/:fileId/edit', (req, res) => {

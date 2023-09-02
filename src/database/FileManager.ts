@@ -14,9 +14,9 @@ export class FileManager {
     }
 
     createFile(name: string, path: string) {
-        this.db
+        return this.db
             .prepare('insert into files (name, path) values (?, ?)')
-            .run(name, path);
+            .run(name, path).lastInsertRowid;
     }
 
     getFile(id: number): File | undefined {

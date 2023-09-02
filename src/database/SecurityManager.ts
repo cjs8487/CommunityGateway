@@ -118,6 +118,7 @@ export class SecurityManager {
         const grants: string[] = [];
         discordUser.roles.forEach((roleId) => {
             const role = this.getRoleForDiscordRole(roleId);
+            if (!role) return;
             role.points.forEach((point) => {
                 if (grants.length === permissions.length) return;
                 if (point.enabled && !grants.includes(point.permission)) {
@@ -166,10 +167,11 @@ export class SecurityManager {
         };
     }
 
-    getRoleForDiscordRole(roleId: string): SecurityRole {
+    getRoleForDiscordRole(roleId: string): SecurityRole | undefined {
         const role = this.db
-            .prepare('select * from security_roles where roleId=?')
+            .prepare('select * from security_roles where role_id=?')
             .get(roleId);
+        if (!role) return undefined;
         return {
             id: role.id,
             roleId: role.role_id,
