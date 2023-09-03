@@ -17,3 +17,8 @@ create table security_points (
     enabled integer not null,
     foreign key(role) references security_roles(id) on delete cascade
 );
+
+create table forum_auto_add (
+    channel text not null,
+    user text not null
+)

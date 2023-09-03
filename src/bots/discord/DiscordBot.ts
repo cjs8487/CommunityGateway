@@ -1,10 +1,12 @@
 /* eslint-disable max-len */
 import {
+    ChannelType,
     Client,
     GatewayIntentBits,
     Interaction,
     REST,
     Routes,
+    ThreadChannel,
     time,
 } from 'discord.js';
 import { logInfo } from '../../Logger';
@@ -13,6 +15,7 @@ import { commandList } from './commands/CommandList';
 import buttonHandlers from './commands/components/ButtonList';
 import { editMessage } from './util/MessageUtils';
 import { syncAll } from './modules/DataSync';
+import { discordDataManager } from '../../System';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
@@ -74,10 +77,24 @@ const onInteraction = async (interaction: Interaction) => {
     }
 };
 
+const onThreadCreate = (thread: ThreadChannel) => {
+    if (thread.parent?.type !== ChannelType.GuildForum) {
+        return;
+    }
+    const toAdd: string[] = discordDataManager.getUsersToAutoAdd(
+        thread.parent.id,
+    );
+
+    toAdd.forEach((id) => {
+        thread.members.add(id);
+    });
+};
+
 export const init = async () => {
     client.once('ready', onReady);
     client.login(discordBotToken);
     client.on('interactionCreate', onInteraction);
+    client.on('threadCreate', onThreadCreate);
 };
 
 export default {};

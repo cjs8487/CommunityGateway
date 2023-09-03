@@ -108,4 +108,36 @@ export class DiscordDataManager {
                 .all(channel).length > 0
         );
     }
+
+    getUsersToAutoAdd(channel: string): string[] {
+        return this.db
+            .prepare('select user from forum_auto_add where channel=?')
+            .all(channel)
+            .map((result) => result.user);
+    }
+
+    addUserToAutoAdd(channel: string, user: string) {
+        this.db
+            .prepare('insert into forum_auto_add (channel, user) values (?, ?)')
+            .run(channel, user);
+    }
+
+    deleteUserAutoAdd(channel: string, user: string) {
+        this.db
+            .prepare('delete from forum_auto_add where channel=? and user=?')
+            .run(channel, user);
+    }
+
+    clearUserAutoAdd(user: string) {
+        return this.db
+            .prepare('delete from forum_auto_add where user=?')
+            .run(user).changes;
+    }
+
+    channelsUserAutoAddedTo(user: string): string[] {
+        return this.db
+            .prepare('select channel from forum_auto_add where user=?')
+            .all(user)
+            .map((result) => result.channel);
+    }
 }
