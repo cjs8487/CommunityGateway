@@ -6,14 +6,14 @@ export type DisplayUser = {
     username: string;
     avatar: string;
     discordId: string;
-}
+};
 
 export type AsyncSubmission = {
     id: number;
     user: DisplayUser;
     time: string;
     comment: string;
-}
+};
 
 export type Async = {
     id: number;
@@ -24,7 +24,7 @@ export type Async = {
     versionLink: string;
     creator: DisplayUser;
     submissions: AsyncSubmission[];
-}
+};
 
 type DBSubmission = {
     id: number;
@@ -32,7 +32,7 @@ type DBSubmission = {
     user: number;
     time: string;
     comment: string;
-}
+};
 
 type DBAsync = {
     id: number;
@@ -42,7 +42,7 @@ type DBAsync = {
     version: string;
     version_link: string;
     creator: number;
-}
+};
 
 export class AsyncManager {
     db: Database;
@@ -53,7 +53,9 @@ export class AsyncManager {
 
     getAsyncList(): Async[] {
         const asyncs: DBAsync[] = this.db.prepare('select * from asyncs').all();
-        const submissions: DBSubmission[] = this.db.prepare('select * from async_submissions').all();
+        const submissions: DBSubmission[] = this.db
+            .prepare('select * from async_submissions')
+            .all();
 
         return asyncs.map((async) => {
             const creator = userManager.getUser(async.creator);
@@ -69,26 +71,32 @@ export class AsyncManager {
                     username: creator.discordUsername,
                     avatar: creator.discordAvatar,
                 },
-                submissions: submissions.filter((submission) => submission.race === async.id).map((submission) => {
-                    const submitter = userManager.getUser(submission.user);
-                    return {
-                        id: submission.id,
-                        user: {
-                            discordId: submitter.discordId,
-                            avatar: submitter.discordAvatar,
-                            username: submitter.discordUsername,
-                        },
-                        time: submission.time,
-                        comment: submission.comment,
-                    };
-                }),
+                submissions: submissions
+                    .filter((submission) => submission.race === async.id)
+                    .map((submission) => {
+                        const submitter = userManager.getUser(submission.user);
+                        return {
+                            id: submission.id,
+                            user: {
+                                discordId: submitter.discordId,
+                                avatar: submitter.discordAvatar,
+                                username: submitter.discordUsername,
+                            },
+                            time: submission.time,
+                            comment: submission.comment,
+                        };
+                    }),
             };
         });
     }
 
     getAsync(id: number): Async {
-        const raceData: DBAsync = this.db.prepare('select * from asyncs where id=?').get(id);
-        const submissions: DBSubmission[] = this.db.prepare('select * from async_submissions where race=?').all(id);
+        const raceData: DBAsync = this.db
+            .prepare('select * from asyncs where id=?')
+            .get(id);
+        const submissions: DBSubmission[] = this.db
+            .prepare('select * from async_submissions where race=?')
+            .all(id);
 
         const creator = userManager.getUser(raceData.creator);
         return {
@@ -120,22 +128,48 @@ export class AsyncManager {
     }
 
     updateAsync(id: number, async: Partial<Async>) {
-        this.db.prepare('');
+        this.db
+            .prepare(
+                `
+                update asyncs set
+                    name=coalesce(?,name),
+                    permalink=coalesce(?,permalink),
+                    hash=coalesce(?,hash),
+                    version=coalesce(?,version),
+                    version_link=coalesce(?,version_link)
+                where id=?`,
+            )
+            .run(
+                async.name,
+                async.permalink,
+                async.hash,
+                async.version,
+                async.versionLink,
+                id,
+            );
     }
 
     deleteAsync(id: number) {
         this.db.prepare('delete from asyncs where id=?').run(id);
     }
 
-    createAsync(name: string, permalink: string, hash: string, creator: number) {
+    createAsync(
+        name: string,
+        permalink: string,
+        hash: string,
+        creator: number,
+    ) {
         return this.db
-            .prepare('insert into asyncs (name, permalink, hash, creator) values (?, ?, ?, ?)')
-            .run(name, permalink, hash, creator)
-            .lastInsertRowid;
+            .prepare(
+                'insert into asyncs (name, permalink, hash, creator) values (?, ?, ?, ?)',
+            )
+            .run(name, permalink, hash, creator).lastInsertRowid;
     }
 
     getSubmissionsForAsync(id: number): AsyncSubmission[] {
-        const submissions = this.db.prepare('select * from async_submissions where id=?').all(id);
+        const submissions = this.db
+            .prepare('select * from async_submissions where id=?')
+            .all(id);
         return submissions.map((submission) => {
             const user = userManager.getUser(submission.user);
             return {
@@ -151,13 +185,22 @@ export class AsyncManager {
         });
     }
 
-    createSubmission(asyncId: number, user: number, time: string, comment: string) {
+    createSubmission(
+        asyncId: number,
+        user: number,
+        time: string,
+        comment: string,
+    ) {
         this.db
-            .prepare('insert into async_submissions (race, user, time, comment) values (?, ?, ?, ?)')
+            .prepare(
+                'insert into async_submissions (race, user, time, comment) values (?, ?, ?, ?)',
+            )
             .run(asyncId, user, time, comment);
     }
 
     deleteSubmission(id: number) {
-        return this.db.prepare('delete from async_submissions where id=?').run(id).changes;
+        return this.db
+            .prepare('delete from async_submissions where id=?')
+            .run(id).changes;
     }
 }
