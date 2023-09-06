@@ -1,5 +1,5 @@
 import { readdirSync } from 'fs';
-import { fileManager } from '../System';
+import { fileManager } from '../../System';
 
 export const loadFilesFromDisk = () => {
     const root = readdirSync('files');

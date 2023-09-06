@@ -1,6 +1,12 @@
-import { Database } from 'better-sqlite3';
+import { Database } from './core/Database';
 
 export type File = {
+    id: number;
+    name: string;
+    path: string;
+};
+
+type DBFile = {
     id: number;
     name: string;
     path: string;
@@ -14,15 +20,18 @@ export class FileManager {
     }
 
     createFile(name: string, path: string) {
-        return this.db
-            .prepare('insert into files (name, path) values (?, ?)')
-            .run(name, path).lastInsertRowid;
+        return this.db.run(
+            'insert into files (name, path) values (?, ?)',
+            name,
+            path,
+        ).lastInsertRowid;
     }
 
     getFile(id: number): File | undefined {
-        const dbValue = this.db
-            .prepare('select * from files where id=?')
-            .get(id);
+        const dbValue: DBFile = this.db.get(
+            'select * from files where id=?',
+            id,
+        );
         if (dbValue) {
             return {
                 id: dbValue.id,
@@ -35,27 +44,25 @@ export class FileManager {
 
     fileWithNameExistsInPath(name: string, path: string) {
         return (
-            this.db
-                .prepare('select * from files where name=? and path=?')
-                .all(name, path).length > 0
+            this.db.all(
+                'select * from files where name=? and path=?',
+                name,
+                path,
+            ).length > 0
         );
     }
 
     getAllFiles(): File[] {
-        return this.db
-            .prepare('select * from files')
-            .all()
-            .map((file) => ({
-                id: file.id,
-                name: file.name,
-                path: file.path,
-            }));
+        return this.db.all<DBFile>('select * from files').map((file) => ({
+            id: file.id,
+            name: file.name,
+            path: file.path,
+        }));
     }
 
     filesAtPath(path: string): File[] {
         return this.db
-            .prepare('select * from files where path=?')
-            .all(path)
+            .all<DBFile>('select * from files where path=?', path)
             .map((file) => ({
                 id: file.id,
                 name: file.name,
@@ -64,6 +71,6 @@ export class FileManager {
     }
 
     deleteFile(fileId: number) {
-        this.db.prepare('delete from files where id=?').run(fileId);
+        this.db.run('delete from files where id=?', fileId);
     }
 }

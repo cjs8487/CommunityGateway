@@ -9,8 +9,9 @@ import { AsyncManager } from './database/AsyncManager';
 import { DiscordDataManager } from './database/DiscordDataManager';
 import DispatchManager from './lib/DispatchManager';
 import { FileManager } from './database/FileManager';
-import { loadFilesFromDisk } from './database/DatabaseCore';
+import { loadFilesFromDisk } from './database/core/DatabaseCore';
 import { SecurityManager } from './database/SecurityManager';
+import SQLiteDatabase from './database/core/SQLiteDatabase';
 
 // database setup
 // this setup sequence makes several assumptions
@@ -83,13 +84,15 @@ process.on('SIGTERM', () => process.exit(128 + 15));
 // Ensure the database connection closes when the process terminates
 process.on('exit', () => db.close());
 
+const database = new SQLiteDatabase(db);
+
 export const dispatchManager = new DispatchManager();
-export const userManager = new UserManager(db);
-export const dynamicDataManager = new DynamicDataManager(db);
-export const asyncManager = new AsyncManager(db);
-export const discordDataManager = new DiscordDataManager(db);
-export const fileManager = new FileManager(db);
-export const securityManager = new SecurityManager(db);
+export const userManager = new UserManager(database);
+export const dynamicDataManager = new DynamicDataManager(database);
+export const asyncManager = new AsyncManager(database);
+export const discordDataManager = new DiscordDataManager(database);
+export const fileManager = new FileManager(database);
+export const securityManager = new SecurityManager(database);
 
 loadFilesFromDisk();
 

@@ -1,10 +1,10 @@
-import { Database } from 'better-sqlite3';
 import axios from 'axios';
 import { Guild, GuildMember, Role } from '../lib/DiscordTypes';
 import { discordApiRoot, discordBotToken, discordServer } from '../Environment';
 import { logInfo } from '../Logger';
 import { userManager } from '../System';
 import { User } from './UserManager';
+import { Database } from './core/Database';
 
 export type SecurityPoint = {
     id: number;
@@ -17,6 +17,18 @@ export type SecurityRole = {
     roleId: string;
     enabled: boolean;
     points: SecurityPoint[];
+};
+
+type DBRole = {
+    id: number;
+    role_id: string;
+    enabled: number;
+};
+
+type DBPoint = {
+    id: number;
+    permission: string;
+    enabled: number;
 };
 
 const permissions = [
@@ -71,19 +83,20 @@ export class SecurityManager {
                         logInfo(
                             `Deleting state permission ${point.permission} from security role ${role.id}`,
                         );
-                        this.db
-                            .prepare('delete from security_points where id=?')
-                            .run(point.id);
+                        this.db.run(
+                            'delete from security_points where id=?',
+                            point.id,
+                        );
                     }
                     foundPoints.push(point.permission);
                 });
                 permissions.forEach((permission) => {
                     if (!foundPoints.includes(permission)) {
-                        this.db
-                            .prepare(
-                                'insert into security_points (role, permission, enabled) values (?, ?, 1)',
-                            )
-                            .run(role.id, permission);
+                        this.db.run(
+                            'insert into security_points (role, permission, enabled) values (?, ?, 1)',
+                            role.id,
+                            permission,
+                        );
                     }
                 });
                 assignedRoles.push(role.roleId);
@@ -131,15 +144,16 @@ export class SecurityManager {
 
     getAllRoles(): SecurityRole[] {
         return this.db
-            .prepare('select * from security_roles')
-            .all()
+            .all<DBRole>('select * from security_roles')
             .map((role) => ({
                 id: role.id,
                 roleId: role.role_id,
                 enabled: !!role.enabled,
                 points: this.db
-                    .prepare('select * from security_points where role=?')
-                    .all(role.id)
+                    .all<DBPoint>(
+                        'select * from security_points where role=?',
+                        role.id,
+                    )
                     .map((point) => ({
                         id: point.id,
                         permission: point.permission,
@@ -149,16 +163,19 @@ export class SecurityManager {
     }
 
     getRole(id: number): SecurityRole {
-        const role = this.db
-            .prepare('select * from security_roles where id=?')
-            .get(id);
+        const role = this.db.get<DBRole>(
+            'select * from security_roles where id=?',
+            id,
+        );
         return {
             id: role.id,
             roleId: role.role_id,
             enabled: !!role.enabled,
             points: this.db
-                .prepare('select * from security_points where role=?')
-                .all(role.id)
+                .all<DBPoint>(
+                    'select * from security_points where role=?',
+                    role.id,
+                )
                 .map((point) => ({
                     id: point.id,
                     permission: point.permission,
@@ -168,17 +185,20 @@ export class SecurityManager {
     }
 
     getRoleForDiscordRole(roleId: string): SecurityRole | undefined {
-        const role = this.db
-            .prepare('select * from security_roles where role_id=?')
-            .get(roleId);
+        const role: DBRole = this.db.get(
+            'select * from security_roles where role_id=?',
+            roleId,
+        );
         if (!role) return undefined;
         return {
             id: role.id,
             roleId: role.role_id,
             enabled: !!role.enabled,
             points: this.db
-                .prepare('select * from security_points where role=?')
-                .all(role.id)
+                .all<DBPoint>(
+                    'select * from security_points where role=?',
+                    role.id,
+                )
                 .map((point) => ({
                     id: point.id,
                     permission: point.permission,
@@ -188,17 +208,16 @@ export class SecurityManager {
     }
 
     createRole(roleId: string) {
-        const newRole = this.db
-            .prepare(
-                'insert into security_roles (role_id, enabled) values (?, 1)',
-            )
-            .run(roleId).lastInsertRowid;
+        const newRole = this.db.run(
+            'insert into security_roles (role_id, enabled) values (?, 1)',
+            roleId,
+        ).lastInsertRowid;
         permissions.forEach((permission) => {
-            this.db
-                .prepare(
-                    'insert into security_points (role, permission, enabled) values (?, ?, 1)',
-                )
-                .run(newRole, permission);
+            this.db.run(
+                'insert into security_points (role, permission, enabled) values (?, ?, 1)',
+                newRole,
+                permission,
+            );
         });
         this.availableRoles.splice(
             this.availableRoles.findIndex((role) => role.id === roleId),
@@ -214,40 +233,41 @@ export class SecurityManager {
         if (pushRole) {
             this.availableRoles.push(pushRole);
         }
-        this.db.prepare('delete from security_roles where id=?').run(id);
+        this.db.run('delete from security_roles where id=?', id);
     }
 
     roleHasData(roleId: string) {
         return (
-            this.db
-                .prepare('select id from security_roles where role_id=?')
-                .all(roleId).length > 0
+            this.db.all('select id from security_roles where role_id=?', roleId)
+                .length > 0
         );
     }
 
     roleExists(id: number) {
         return (
-            this.db.prepare('select id from security_roles where id=?').all(id)
-                .length > 0
+            this.db.all('select id from security_roles where id=?', id).length >
+            0
         );
     }
 
     setRoleEnabled(id: number, enabled: boolean) {
-        this.db
-            .prepare('update security_roles set enabled=? where id=?')
-            .run(enabled ? 1 : 0, id);
+        this.db.run(
+            'update security_roles set enabled=? where id=?',
+            enabled ? 1 : 0,
+            id,
+        );
     }
 
     setPointEnabled(id: number, enabled: boolean) {
-        this.db
-            .prepare('update security_points set enabled=? where id=?')
-            .run(enabled ? 1 : 0, id);
+        this.db.run(
+            'update security_points set enabled=? where id=?',
+            enabled ? 1 : 0,
+            id,
+        );
     }
 
     setDiscordRole(id: number, role: string) {
-        this.db
-            .prepare('update security_roles set role_id=? where id=?')
-            .run(role, id);
+        this.db.run('update security_roles set role_id=? where id=?', role, id);
     }
 
     roleIsValid(roleId: string) {

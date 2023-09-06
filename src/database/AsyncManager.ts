@@ -1,6 +1,5 @@
-import { Database } from 'better-sqlite3';
-// eslint-disable-next-line import/no-cycle
 import { userManager } from '../System';
+import { Database } from './core/Database';
 
 export type DisplayUser = {
     username: string;
@@ -52,10 +51,10 @@ export class AsyncManager {
     }
 
     getAsyncList(): Async[] {
-        const asyncs: DBAsync[] = this.db.prepare('select * from asyncs').all();
-        const submissions: DBSubmission[] = this.db
-            .prepare('select * from async_submissions')
-            .all();
+        const asyncs: DBAsync[] = this.db.all('select * from asyncs');
+        const submissions: DBSubmission[] = this.db.all(
+            'select * from async_submissions',
+        );
 
         return asyncs.map((async) => {
             const creator = userManager.getUser(async.creator);
@@ -91,12 +90,14 @@ export class AsyncManager {
     }
 
     getAsync(id: number): Async {
-        const raceData: DBAsync = this.db
-            .prepare('select * from asyncs where id=?')
-            .get(id);
-        const submissions: DBSubmission[] = this.db
-            .prepare('select * from async_submissions where race=?')
-            .all(id);
+        const raceData: DBAsync = this.db.get(
+            'select * from asyncs where id=?',
+            id,
+        );
+        const submissions: DBSubmission[] = this.db.all(
+            'select * from async_submissions where race=?',
+            id,
+        );
 
         const creator = userManager.getUser(raceData.creator);
         return {
@@ -128,9 +129,8 @@ export class AsyncManager {
     }
 
     updateAsync(id: number, async: Partial<Async>) {
-        this.db
-            .prepare(
-                `
+        this.db.run(
+            `
                 update asyncs set
                     name=coalesce(?,name),
                     permalink=coalesce(?,permalink),
@@ -138,19 +138,17 @@ export class AsyncManager {
                     version=coalesce(?,version),
                     version_link=coalesce(?,version_link)
                 where id=?`,
-            )
-            .run(
-                async.name,
-                async.permalink,
-                async.hash,
-                async.version,
-                async.versionLink,
-                id,
-            );
+            async.name,
+            async.permalink,
+            async.hash,
+            async.version,
+            async.versionLink,
+            id,
+        );
     }
 
     deleteAsync(id: number) {
-        this.db.prepare('delete from asyncs where id=?').run(id);
+        this.db.run('delete from asyncs where id=?', id);
     }
 
     createAsync(
@@ -159,17 +157,20 @@ export class AsyncManager {
         hash: string,
         creator: number,
     ) {
-        return this.db
-            .prepare(
-                'insert into asyncs (name, permalink, hash, creator) values (?, ?, ?, ?)',
-            )
-            .run(name, permalink, hash, creator).lastInsertRowid;
+        return this.db.run(
+            'insert into asyncs (name, permalink, hash, creator) values (?, ?, ?, ?)',
+            name,
+            permalink,
+            hash,
+            creator,
+        ).lastInsertRowid;
     }
 
     getSubmissionsForAsync(id: number): AsyncSubmission[] {
-        const submissions = this.db
-            .prepare('select * from async_submissions where id=?')
-            .all(id);
+        const submissions = this.db.all<DBSubmission>(
+            'select * from async_submissions where id=?',
+            id,
+        );
         return submissions.map((submission) => {
             const user = userManager.getUser(submission.user);
             return {
@@ -191,16 +192,17 @@ export class AsyncManager {
         time: string,
         comment: string,
     ) {
-        this.db
-            .prepare(
-                'insert into async_submissions (race, user, time, comment) values (?, ?, ?, ?)',
-            )
-            .run(asyncId, user, time, comment);
+        this.db.run(
+            'insert into async_submissions (race, user, time, comment) values (?, ?, ?, ?)',
+            asyncId,
+            user,
+            time,
+            comment,
+        );
     }
 
     deleteSubmission(id: number) {
-        return this.db
-            .prepare('delete from async_submissions where id=?')
-            .run(id).changes;
+        return this.db.run('delete from async_submissions where id=?', id)
+            .changes;
     }
 }
