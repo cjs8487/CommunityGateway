@@ -1,4 +1,4 @@
-import { open, writeFileSync } from 'fs';
+import { open, rmSync, writeFileSync } from 'fs';
 import { RequestHandler, Router } from 'express';
 import { fileManager, userManager } from '../../System';
 import { isAuthenticated } from '../../core/auth/AuthCore';
@@ -86,7 +86,14 @@ files.delete('/:fileId', (req, res) => {
         res.status(400).send();
         return;
     }
+    const file = fileManager.getFile(fileIdNum);
+    if (!file) {
+        res.status(404).send();
+        return;
+    }
+    rmSync(`files/${file.path}/${file.name}`);
     fileManager.deleteFile(fileIdNum);
+    res.status(200).send();
 });
 
 export default files;
