@@ -49,6 +49,7 @@ app.use(
         saveUninitialized: true,
         cookie: { secure: !testing },
         proxy: !testing,
+        unset: 'destroy',
     }),
 );
 

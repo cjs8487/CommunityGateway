@@ -84,7 +84,7 @@ export class UserManager {
                         errorMessage += `${e.response.data.error}.`;
                         // flag the user as needing an oauth refresh
                         if (e.response.status === 400) {
-                            this.flagRefresh(user.id);
+                            user.needsRefresh = true;
                             log = false;
                             logInfo(
                                 `Flagging user ${user.id} as needing refresh`,

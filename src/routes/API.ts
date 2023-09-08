@@ -32,6 +32,14 @@ api.get(
         }
         try {
             const internalUser = userManager.getUser(req.session.user);
+            // catch known refresh targets and avoid erroring out on the Discord
+            // API. This also creates a consistent experience for clients when
+            // stale sessions occur or data is modified by another process in
+            // the middle of the middleware stack
+            if (internalUser.needsRefresh) {
+                res.sendStatus(401);
+                return;
+            }
             const { data } = await axios.get(
                 'https://discord.com/api/v10/users/@me',
                 {
