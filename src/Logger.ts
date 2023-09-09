@@ -1,4 +1,5 @@
 import { createLogger, format, transports } from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import { testing } from './Environment';
 
 const { combine, colorize, timestamp, printf } = format;
@@ -9,10 +10,17 @@ const logFormat = combine(
     printf((info) => `${info.timestamp} [${info.level}] ${info.message}`),
 );
 
+const rotateTransport: DailyRotateFile = new DailyRotateFile({
+    filename: 'gateway-%DATE%.log',
+    datePattern: 'YYYY-MM-DD',
+    maxFiles: '7d',
+    zippedArchive: true,
+});
+
 export const logger = createLogger({
     level: 'info',
     format: logFormat,
-    transports: [new transports.File({ filename: 'full.log' })],
+    transports: [rotateTransport],
 });
 
 if (testing) {

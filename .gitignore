@@ -110,3 +110,4 @@ static/
 build/
 .vscode/
 /files/
+*-audit.json
