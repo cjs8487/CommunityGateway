@@ -205,4 +205,13 @@ export class AsyncManager {
         return this.db.run('delete from async_submissions where id=?', id)
             .changes;
     }
+
+    submissionBelongsToUser(id: number, user: number) {
+        return (
+            this.db.get<DBSubmission>(
+                'select * from async_submissions where id=?',
+                id,
+            ).user === user
+        );
+    }
 }
