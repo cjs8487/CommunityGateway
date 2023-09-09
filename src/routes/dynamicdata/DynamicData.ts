@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { isAdmin, isAuthenticated } from '../../core/auth/AuthCore';
-import { dynamicDataManager } from '../../System';
+import { dynamicDataManager, userManager } from '../../System';
 import types from './DataType';
 import { syncDataToMessages } from '../../bots/discord/modules/DataSync';
+import { userHasGrant } from '../../lib/UserLib';
 
 const dynamicData = Router();
 
@@ -35,6 +36,19 @@ dynamicData.get('/:type', (req, res) => {
     }
 });
 
+dynamicData.use(isAuthenticated, (req, res, next) => {
+    if (!req.session.user) {
+        res.sendStatus(401);
+        return;
+    }
+    const user = userManager.getUser(req.session.user);
+    if (!userHasGrant(user, 'Manage Dynamic Data')) {
+        res.sendStatus(403);
+        return;
+    }
+    next();
+});
+
 dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
     const { typeName } = req.params;
     const { data } = req.body;
@@ -48,20 +62,15 @@ dynamicData.post('/:typeName', isAuthenticated, isAdmin, (req, res) => {
     res.status(200).send();
 });
 
-dynamicData.post(
-    '/:typeName/syncOrder',
-    isAuthenticated,
-    isAdmin,
-    (req, res) => {
-        const { typeName } = req.params;
-        const { order } = req.body;
-        dynamicDataManager.updateOrder(typeName, order);
-        syncDataToMessages(typeName);
-        res.status(200).send();
-    },
-);
+dynamicData.post('/:typeName/syncOrder', (req, res) => {
+    const { typeName } = req.params;
+    const { order } = req.body;
+    dynamicDataManager.updateOrder(typeName, order);
+    syncDataToMessages(typeName);
+    res.status(200).send();
+});
 
-dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
+dynamicData.post('/edit/:id', (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
     const { data } = req.body;
@@ -81,7 +90,7 @@ dynamicData.post('/edit/:id', isAuthenticated, isAdmin, (req, res) => {
     res.status(200).send();
 });
 
-dynamicData.delete('/:id', isAuthenticated, isAdmin, (req, res) => {
+dynamicData.delete('/:id', (req, res) => {
     const { id } = req.params;
     const parsedId = Number(id);
     if (Number.isNaN(parsedId)) {

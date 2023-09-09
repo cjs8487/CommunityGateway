@@ -55,7 +55,12 @@ export const userHasGrant = (user: User, grant: string) => {
     if (!grants) {
         return false;
     }
-    return grants.includes(grant);
+    const hasGrant = grants.includes(grant);
+    if (!hasGrant) {
+        securityManager.setGrantsForUser(user);
+        return securityManager.securityCache.get(user.id)?.includes(grant);
+    }
+    return true;
 };
 
 export default {};

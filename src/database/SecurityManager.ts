@@ -44,6 +44,7 @@ export class SecurityManager {
     availableRoles: Role[] = [];
 
     securityCache: Map<number, string[]>;
+    canCheck: Map<number, boolean>;
 
     constructor(db: Database) {
         this.db = db;
@@ -114,12 +115,19 @@ export class SecurityManager {
         //
         // tech note - this is technically an asynchronous block
         this.securityCache = new Map();
+        this.canCheck = new Map();
         userManager.users.forEach(async (user) => {
             this.setGrantsForUser(user);
         });
     }
 
-    async setGrantsForUser(user: User) {
+    async setGrantsForUser(user: User, skipOverride = false) {
+        // skip override forces the check to occur
+        const canSkip =
+            this.securityCache.get(user.id) !== undefined && !skipOverride;
+        if (canSkip && !this.canCheck.get(user.id)) {
+            return;
+        }
         const { data: discordUser } = await axios.get<GuildMember>(
             `${discordApiRoot}/guilds/${discordServer}/members/${user.discordId}`,
             {
@@ -140,6 +148,8 @@ export class SecurityManager {
             });
         });
         this.securityCache.set(user.id, grants);
+        this.canCheck.set(user.id, false);
+        setTimeout(() => this.canCheck.set(user.id, true), 15 * 60 * 1000);
     }
 
     getAllRoles(): SecurityRole[] {

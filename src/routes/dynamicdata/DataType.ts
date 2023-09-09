@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { isAdmin, isAuthenticated } from '../../core/auth/AuthCore';
-import { dynamicDataManager } from '../../System';
+import { isAuthenticated } from '../../core/auth/AuthCore';
+import { dynamicDataManager, userManager } from '../../System';
+import { userHasGrant } from '../../lib/UserLib';
 
 const types = Router();
 
@@ -9,13 +10,26 @@ types.get('/types', (req, res) => {
     res.status(200).send(typeList);
 });
 
-types.post('/types', isAuthenticated, isAdmin, (req, res) => {
+types.use(isAuthenticated, (req, res, next) => {
+    if (!req.session.user) {
+        res.sendStatus(401);
+        return;
+    }
+    const user = userManager.getUser(req.session.user);
+    if (!userHasGrant(user, 'Manage Dynamic Data')) {
+        res.sendStatus(403);
+        return;
+    }
+    next();
+});
+
+types.post('/types', (req, res) => {
     const { name, shape } = req.body;
     dynamicDataManager.createType(name, JSON.stringify(shape));
     res.status(200).send();
 });
 
-types.delete('/types/:typeName', isAuthenticated, isAdmin, (req, res) => {
+types.delete('/types/:typeName', (req, res) => {
     const { typeName } = req.params;
     const deletes = dynamicDataManager.deleteType(typeName);
     if (deletes === 0) {

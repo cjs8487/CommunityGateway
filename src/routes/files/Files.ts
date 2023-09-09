@@ -13,7 +13,7 @@ const hasFileEditPermissions: RequestHandler = (req, res, next) => {
     }
     const user = userManager.getUser(req.session.user);
     if (!userHasGrant(user, 'Manage Content Pages')) {
-        res.sendStatus(401);
+        res.sendStatus(403);
         return;
     }
     next();
