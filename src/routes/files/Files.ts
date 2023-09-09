@@ -6,13 +6,15 @@ import { userHasGrant } from '../../lib/UserLib';
 
 const files = Router();
 
+const contentPageGrant = 'Manage Content Pages';
+
 const hasFileEditPermissions: RequestHandler = (req, res, next) => {
     if (!req.session.user) {
         res.sendStatus(401);
         return;
     }
     const user = userManager.getUser(req.session.user);
-    if (!userHasGrant(user, 'Manage Content Pages')) {
+    if (!userHasGrant(user, contentPageGrant)) {
         res.sendStatus(403);
         return;
     }
@@ -22,6 +24,23 @@ const hasFileEditPermissions: RequestHandler = (req, res, next) => {
 files.get('/', (req, res) => {
     const fileList = fileManager.getAllFiles();
     res.status(200).send(fileList);
+});
+
+files.get('/permissionCheck', isAuthenticated, (req, res) => {
+    if (!req.session.user) {
+        res.sendStatus(401);
+        return;
+    }
+    const user = userManager.getUser(req.session.user);
+    if (!user) {
+        res.sendStatus(500);
+        return;
+    }
+    if (!userHasGrant(user, contentPageGrant)) {
+        res.sendStatus(401);
+        return;
+    }
+    res.sendStatus(200);
 });
 
 files.get('/:path', (req, res) => {
