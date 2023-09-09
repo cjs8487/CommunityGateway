@@ -7,13 +7,17 @@ import {
     REST,
     Routes,
     ThreadChannel,
-    time,
+    // time,
 } from 'discord.js';
 import { logInfo } from '../../Logger';
-import { discordBotToken, discordCommandServerId } from '../../Environment';
+import {
+    discordBotToken,
+    discordCommandServerId,
+    testing,
+} from '../../Environment';
 import { commandList } from './commands/CommandList';
 import buttonHandlers from './commands/components/ButtonList';
-import { editMessage } from './util/MessageUtils';
+// import { editMessage } from './util/MessageUtils';
 import { syncAll } from './modules/DataSync';
 import { discordDataManager } from '../../System';
 
@@ -34,6 +38,12 @@ const onReady = async (c: Client<true>) => {
         { body: commandData },
     );
 
+    if (!testing) {
+        await rest.put(Routes.applicationCommands(c.user.id || 'missing id'), {
+            body: commandData,
+        });
+    }
+
     c.user?.setPresence({
         status: 'online',
         activities: [
@@ -43,15 +53,15 @@ const onReady = async (c: Client<true>) => {
         ],
     });
 
-    editMessage(
-        '1137917791190650911',
-        '1137917792373448726',
-        '1138675653894484003',
-        `Bot launched at ${time(
-            // eslint-disable-next-line no-bitwise
-            (Date.now() / 1000) >>> 0,
-        )}`,
-    );
+    // editMessage(
+    //     '1137917791190650911',
+    //     '1137917792373448726',
+    //     '1138675653894484003',
+    //     `Bot launched at ${time(
+    //         // eslint-disable-next-line no-bitwise
+    //         (Date.now() / 1000) >>> 0,
+    //     )}`,
+    // );
     syncAll();
 
     logInfo(`Discord bot initialized and logged in as ${c.user.tag}`);
