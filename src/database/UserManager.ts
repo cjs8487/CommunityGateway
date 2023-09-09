@@ -3,6 +3,7 @@ import { logError, logInfo } from '../Logger';
 import { AuthData } from '../core/auth/AuthLib';
 import { DiscordToken, refreshToken } from '../core/auth/DiscordTokens';
 import { Database } from './core/Database';
+import { hasAdminRoles } from '../lib/UserLib';
 
 export type User = {
     id: number;
@@ -69,6 +70,8 @@ export class UserManager {
                 needsRefresh: userData.needsRefresh,
                 authData: {},
             };
+            this.users.set(user.id, user);
+            this.discordMap.set(user.discordId, user);
             try {
                 if (!user.authData) {
                     user.authData = {};
@@ -76,6 +79,7 @@ export class UserManager {
                 const token = await refreshToken(userData.refreshToken);
                 this.updateDiscordAuth(userData.id, token);
                 user.authData.discordToken = token;
+                this.setAdmin(user.id, await hasAdminRoles(token));
             } catch (e) {
                 let errorMessage = 'Error creating user from database cache - ';
                 let log = true;
@@ -103,9 +107,7 @@ export class UserManager {
                 }
             }
             // check cached data
-            // update cachess in database
-            this.users.set(user.id, user);
-            this.discordMap.set(user.discordId, user);
+            // update caches in database
         });
     }
 
@@ -197,13 +199,15 @@ export class UserManager {
 
     flagRefresh(id: number) {
         const user = this.users.get(id);
-        if (user) user.needsRefresh = true;
+        if (!user) return;
+        user.needsRefresh = true;
         this.db.run('update users set refresh_flag=1 where id=?', id);
     }
 
     clearRefresh(id: number) {
         const user = this.users.get(id);
-        if (user) user.needsRefresh = false;
+        if (!user) return;
+        user.needsRefresh = false;
         this.db.run('update users set refresh_flag=0 where id=?', id);
     }
 
