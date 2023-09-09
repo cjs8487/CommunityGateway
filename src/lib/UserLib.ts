@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {
+    discordAdminOverride,
     discordAdminRole,
     discordApiRoot,
     discordServer,
@@ -18,7 +19,10 @@ export const hasAdminRoles = async (token: DiscordToken): Promise<boolean> => {
             },
         },
     );
-    return data.roles.includes(discordAdminRole);
+    return (
+        data.roles.includes(discordAdminRole) ||
+        data.user.id === discordAdminOverride
+    );
 };
 
 export const getOrCreateUser = async (

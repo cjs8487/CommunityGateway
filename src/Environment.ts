@@ -10,6 +10,7 @@ export const discordAdminRole = process.env.DISCORD_ADMIN_ROLE ?? '';
 export const discordBotToken = process.env.DISCORD_BOT_TOKEN ?? '';
 export const discordCommandServerId =
     process.env.DISCORD_COMMAND_SERVER_ID ?? '';
+export const discordAdminOverride = process.env.DISCORD_ADMIN_OVERRIDE;
 
 export const sessionSecret = process.env.SESSION_SECRET ?? '';
 

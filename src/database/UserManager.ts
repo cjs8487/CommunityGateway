@@ -85,6 +85,7 @@ export class UserManager {
                         // flag the user as needing an oauth refresh
                         if (e.response.status === 400) {
                             user.needsRefresh = true;
+                            this.flagRefresh(user.id);
                             log = false;
                             logInfo(
                                 `Flagging user ${user.id} as needing refresh`,
@@ -196,15 +197,13 @@ export class UserManager {
 
     flagRefresh(id: number) {
         const user = this.users.get(id);
-        if (!user) return;
-        user.needsRefresh = true;
+        if (user) user.needsRefresh = true;
         this.db.run('update users set refresh_flag=1 where id=?', id);
     }
 
     clearRefresh(id: number) {
         const user = this.users.get(id);
-        if (!user) return;
-        user.needsRefresh = false;
+        if (user) user.needsRefresh = false;
         this.db.run('update users set refresh_flag=0 where id=?', id);
     }
 

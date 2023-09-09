@@ -1,13 +1,14 @@
 export type Snowflake = string;
 
-export type GuildMember = {
-    roles: Snowflake[];
-};
-
 export type DiscordUser = {
     id: string;
     username: string;
     avatar: string;
+};
+
+export type GuildMember = {
+    roles: Snowflake[];
+    user: DiscordUser;
 };
 
 export type Role = {
