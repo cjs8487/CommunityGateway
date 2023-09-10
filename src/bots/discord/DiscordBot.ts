@@ -30,13 +30,15 @@ const onReady = async (c: Client<true>) => {
 
     const commandData = commandList.map((command) => command.data.toJSON());
 
-    await rest.put(
-        Routes.applicationGuildCommands(
-            c.user.id || 'missing id',
-            discordCommandServerId,
-        ),
-        { body: commandData },
-    );
+    if (testing) {
+        await rest.put(
+            Routes.applicationGuildCommands(
+                c.user.id || 'missing id',
+                discordCommandServerId,
+            ),
+            { body: commandData },
+        );
+    }
 
     if (!testing) {
         await rest.put(Routes.applicationCommands(c.user.id || 'missing id'), {
