@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { Guild, GuildMember, Role } from '../lib/DiscordTypes';
+import { Guild, Role } from '../lib/DiscordTypes';
 import { discordApiRoot, discordBotToken, discordServer } from '../Environment';
 import { logInfo } from '../Logger';
 import { userManager } from '../System';
 import { User } from './UserManager';
 import { Database } from './core/Database';
+import { getGuildMember } from '../external/discord/DiscordApi';
 
 export type SecurityPoint = {
     id: number;
@@ -128,14 +129,7 @@ export class SecurityManager {
         if (canSkip && !this.canCheck.get(user.id)) {
             return;
         }
-        const { data: discordUser } = await axios.get<GuildMember>(
-            `${discordApiRoot}/guilds/${discordServer}/members/${user.discordId}`,
-            {
-                headers: {
-                    Authorization: `Bot ${discordBotToken}`,
-                },
-            },
-        );
+        const discordUser = await getGuildMember(discordServer, user.discordId);
         const grants: string[] = [];
         discordUser.roles.forEach((roleId) => {
             const role = this.getRoleForDiscordRole(roleId);
