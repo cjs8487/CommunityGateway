@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, SlashCommandStringOption } from 'discord.js';
+import {
+    PermissionFlagsBits,
+    SlashCommandBuilder,
+    SlashCommandStringOption,
+} from 'discord.js';
 import { Command } from './Command';
 import { discordDataManager, dynamicDataManager } from '../../../System';
 import {
@@ -20,6 +24,7 @@ const data: Command = {
         .setDescription(
             "Interfaces with Community Gateway's Dyanamic Data system ",
         )
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .addSubcommandGroup((group) =>
             group
                 .setName('sync')
