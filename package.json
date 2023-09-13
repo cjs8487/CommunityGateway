@@ -1,6 +1,6 @@
 {
     "name": "communitygateway",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "A server and API system for building, maintaining, extending, and interacting with online communities",
     "main": "index.js",
     "scripts": {
