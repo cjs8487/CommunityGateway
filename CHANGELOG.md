@@ -1,3 +1,6 @@
+# 1.0.1
+## Bug Fixes
+- Fix incorrect auth requirement for dynamic data routes
 # 1.0.0
 ## New Features
 ### Core
