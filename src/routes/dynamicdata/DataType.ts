@@ -5,7 +5,7 @@ import { userHasGrant } from '../../lib/UserLib';
 
 const types = Router();
 
-types.get('/types', (req, res) => {
+types.get('/', (req, res) => {
     const typeList = dynamicDataManager.getAllTypes();
     res.status(200).send(typeList);
 });
@@ -23,13 +23,13 @@ types.use(isAuthenticated, (req, res, next) => {
     next();
 });
 
-types.post('/types', (req, res) => {
+types.post('/', (req, res) => {
     const { name, shape } = req.body;
     dynamicDataManager.createType(name, JSON.stringify(shape));
     res.status(200).send();
 });
 
-types.delete('/types/:typeName', (req, res) => {
+types.delete('/:typeName', (req, res) => {
     const { typeName } = req.params;
     const deletes = dynamicDataManager.deleteType(typeName);
     if (deletes === 0) {

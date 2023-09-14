@@ -7,7 +7,7 @@ import { userHasGrant } from '../../lib/UserLib';
 
 const dynamicData = Router();
 
-dynamicData.use(types);
+dynamicData.use('/types', types);
 
 dynamicData.get('/:type', (req, res) => {
     const { type } = req.params;
