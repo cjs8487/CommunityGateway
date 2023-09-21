@@ -9,6 +9,7 @@ import dynamicData from './dynamicdata/DynamicData';
 import asyncs from './asyncs/AsyncList';
 import files from './files/Files';
 import security from './security/Security';
+import superuser from './superuser/Superuser';
 
 const api = Router();
 
@@ -85,5 +86,6 @@ api.use('/asyncs', asyncs);
 api.use('/auth/discord', discordAuth);
 api.use('/files', files);
 api.use('/security', security);
+api.use('/superuser', superuser);
 
 export default api;

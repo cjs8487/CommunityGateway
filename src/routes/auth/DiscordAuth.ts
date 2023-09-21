@@ -11,7 +11,7 @@ const discordAuth = Router();
 
 const authRoot = 'https://discord.com/api/oauth2/authorize';
 const redirectUrl = encodeURIComponent(discordRedirect);
-const scopeList = ['identify', 'guilds.members.read'];
+const scopeList = ['identify', 'guilds.members.read', 'guilds'];
 const scopes = `scope=${encodeURIComponent(scopeList.join(' '))}`;
 const authUrl = `${authRoot}?client_id=${discordClientId}&redirect_uri=${redirectUrl}&response_type=code&${scopes}`;
 
