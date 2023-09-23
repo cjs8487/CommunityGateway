@@ -4,6 +4,7 @@ import { config, userManager } from '../../System';
 import { UserGuild } from '../../lib/DiscordTypes';
 import { DiscordConnection, writeConfig } from '../../Config';
 import { getOrCreateRest } from '../../external/discord/RestManager';
+import { getGuilds } from '../../external/discord/DiscordApi';
 
 const discordManagement = Router();
 
@@ -72,10 +73,24 @@ discordManagement.get('/userServers', async (req, res) => {
     const guilds = (await getOrCreateRest(user).get(
         Routes.userGuilds(),
     )) as UserGuild[];
+    const botServers = await getGuilds();
+    const botServerIds = botServers.map((guild) => guild.id);
+    const usedIds: string[] = [];
     res.status(200).send(
         guilds
             .filter((guild) => {
                 if (config.serverIds.includes(guild.id)) return false;
+                if (usedIds.includes(guild.id)) return false;
+
+                usedIds.push(guild.id);
+
+                // the bot already being in a server trumps all other conditions
+                // if the bot is in the server, the server should be allowed to
+                // connect, even if the user wouldn't normally be able to do the
+                // connection process
+                if (botServerIds.includes(guild.id)) return true;
+
+                // check if the user has the correct permissions
                 const permInt = BigInt(guild.permissions);
                 const hasManageGuild =
                     // eslint-disable-next-line no-bitwise

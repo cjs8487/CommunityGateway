@@ -17,4 +17,9 @@ export const getGuild = async (guild: string): Promise<Guild> => {
     return res as Guild;
 };
 
+export const getGuilds = async (): Promise<Guild[]> => {
+    const res = await rest.get(Routes.userGuilds());
+    return res as Guild[];
+};
+
 export default {};
