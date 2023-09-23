@@ -8,6 +8,6 @@ const superuser = Router();
 superuser.use(isAuthenticated, isAdmin);
 
 superuser.use('/discord', discordManagement);
-superuser.use('/', adminManagement);
+superuser.use('/admins', adminManagement);
 
 export default superuser;

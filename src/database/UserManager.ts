@@ -257,4 +257,14 @@ export class UserManager {
     isAdmin(id: number) {
         return this.users.get(id)?.isAdmin;
     }
+
+    getAdmins() {
+        const admins: User[] = [];
+        this.users.forEach((user) => {
+            if (user.isAdmin) {
+                admins.push(user);
+            }
+        });
+        return admins;
+    }
 }
