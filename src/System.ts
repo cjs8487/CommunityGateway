@@ -12,6 +12,7 @@ import { FileManager } from './database/FileManager';
 import { loadFilesFromDisk } from './database/core/DatabaseCore';
 import { SecurityManager } from './database/SecurityManager';
 import SQLiteDatabase from './database/core/SQLiteDatabase';
+import { loadConfig } from './Config';
 
 // database setup
 // this setup sequence makes several assumptions
@@ -85,6 +86,8 @@ process.on('SIGTERM', () => process.exit(128 + 15));
 process.on('exit', () => db.close());
 
 const database = new SQLiteDatabase(db);
+
+export const config = loadConfig();
 
 export const dispatchManager = new DispatchManager();
 export const userManager = new UserManager(database);

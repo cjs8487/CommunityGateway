@@ -112,3 +112,4 @@ build/
 /files/
 *-audit.json
 *.log.gz
+config/

@@ -22,4 +22,13 @@ export type Guild = {
     id: Snowflake;
     name: string;
     roles: Role[];
+    icon: string;
+};
+
+export type UserGuild = {
+    id: Snowflake;
+    name: string;
+    owner: boolean;
+    permissions: string;
+    icon: string;
 };

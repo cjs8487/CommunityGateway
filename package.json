@@ -4,7 +4,7 @@
     "description": "A server and API system for building, maintaining, extending, and interacting with online communities",
     "main": "index.js",
     "scripts": {
-        "dev": "nodemon -e js,ts,json --files src/main.ts",
+        "dev": "nodemon -e js,ts,json --ignore config/ --files src/main.ts",
         "run": "node build/main.js",
         "build": "tsc --project .",
         "db:backup": "cp database.db db\\ backup.db",
