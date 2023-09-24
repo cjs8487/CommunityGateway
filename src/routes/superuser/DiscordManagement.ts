@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Role, Routes } from 'discord.js';
+import { OAuth2Scopes, PermissionFlagsBits, Role, Routes } from 'discord.js';
 import { config, userManager } from '../../System';
 import { UserGuild } from '../../lib/DiscordTypes';
 import { DiscordConnection, writeConfig } from '../../Config';
@@ -129,6 +129,15 @@ discordManagement.get('/userServers', async (req, res) => {
                 icon: guild.icon,
             })),
     );
+});
+
+discordManagement.get('/link', (req, res) => {
+    res.status(200).send({
+        link: client.generateInvite({
+            permissions: [PermissionFlagsBits.Administrator],
+            scopes: [OAuth2Scopes.Bot],
+        }),
+    });
 });
 
 export default discordManagement;
