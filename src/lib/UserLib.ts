@@ -7,6 +7,15 @@ import { User } from '../database/UserManager';
 
 export const hasAdminRoles = async (token: DiscordToken): Promise<boolean> => {
     let hasPerms = false;
+    const { data: me } = await axios.get<DiscordUser>(
+        `${discordApiRoot}/users/@me`,
+        {
+            headers: {
+                Authorization: `Bearer ${token.accessToken}`,
+            },
+        },
+    );
+    if (config.superusers.includes(me.id)) return true;
     await Promise.all(
         config.servers.map(async (server) => {
             if (hasPerms || !server.adminRole || !server.enabled) return;
