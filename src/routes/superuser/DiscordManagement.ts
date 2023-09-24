@@ -50,7 +50,7 @@ discordManagement.post('/servers', async (req, res) => {
         id,
         name,
         icon,
-        botConnected: false,
+        botConnected: client.guilds.cache.has(id),
         enabled: true,
         adminRole: '',
     });
