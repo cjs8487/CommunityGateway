@@ -1,16 +1,38 @@
 import { Router } from 'express';
-import { Routes } from 'discord.js';
+import { Role, Routes } from 'discord.js';
 import { config, userManager } from '../../System';
 import { UserGuild } from '../../lib/DiscordTypes';
 import { DiscordConnection, writeConfig } from '../../Config';
 import { getOrCreateRest } from '../../external/discord/RestManager';
 import { getGuilds } from '../../external/discord/DiscordApi';
+import { client } from '../../bots/discord/DiscordBot';
 
 const discordManagement = Router();
 
 // manage discord data sources
-discordManagement.get('/servers', (req, res) => {
-    res.status(200).send(config.servers);
+discordManagement.get('/servers', async (req, res) => {
+    const servers = await Promise.all(
+        config.servers.map(async (server) => {
+            const data = {
+                id: server.id,
+                icon: server.icon,
+                name: server.name,
+                botConnected: server.botConnected,
+                enabled: server.enabled,
+                adminRole: undefined as unknown as Role,
+            };
+            if (server.adminRole) {
+                const role = await (
+                    await client.guilds.fetch(server.id)
+                ).roles.fetch(server.adminRole);
+                if (role) {
+                    data.adminRole = role;
+                }
+            }
+            return data;
+        }),
+    );
+    res.status(200).send(servers);
 });
 
 discordManagement.post('/servers', async (req, res) => {
@@ -36,13 +58,13 @@ discordManagement.post('/servers', async (req, res) => {
     res.sendStatus(201);
 });
 
-discordManagement.delete('/servers', (req, res) => {
-    const { id } = req.body;
+discordManagement.delete('/servers/:serverId', async (req, res) => {
+    const { serverId } = req.params;
     const { servers } = config;
     let found = false;
     const newServers: DiscordConnection[] = [];
     servers.forEach((server) => {
-        if (server.id === id) {
+        if (server.id === serverId) {
             found = true;
             return;
         }
@@ -53,7 +75,8 @@ discordManagement.delete('/servers', (req, res) => {
         return;
     }
     config.servers = newServers;
-    writeConfig(config);
+    config.serverIds = newServers.map((server) => server.id);
+    await writeConfig(config);
     res.sendStatus(200);
 });
 
