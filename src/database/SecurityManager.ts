@@ -1,9 +1,10 @@
-import { Role } from '../lib/DiscordTypes';
+import { Role } from 'discord.js';
 import { logInfo } from '../Logger';
 import { config, userManager } from '../System';
 import { User } from './UserManager';
 import { Database } from './core/Database';
-import { getGuild, getGuildMember } from '../external/discord/DiscordApi';
+import { getGuildMember } from '../external/discord/DiscordApi';
+import { client } from '../bots/discord/DiscordBot';
 
 export type SecurityPoint = {
     id: number;
@@ -52,11 +53,16 @@ export class SecurityManager {
         Promise.all(
             config.servers.map(async (server) => {
                 if (!server.enabled || !server.botConnected) return;
-                const guild = await getGuild(server.id);
+                const roles = await (
+                    await client.guilds.fetch(server.id)
+                ).roles.fetch();
                 this.allRoles.push(
-                    ...guild.roles.filter(
-                        (role) => !role.managed && role.name !== '@everyone',
-                    ),
+                    ...roles
+                        .filter(
+                            (role) =>
+                                !role.managed && role.name !== '@everyone',
+                        )
+                        .values(),
                 );
             }),
         ).then(() => {

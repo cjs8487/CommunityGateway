@@ -116,12 +116,10 @@ const onGuildCreate = (guild: Guild) => {
     }
 };
 
-export const init = async () => {
-    client.once('ready', onReady);
-    client.login(discordBotToken);
-    client.on('interactionCreate', onInteraction);
-    client.on('threadCreate', onThreadCreate);
-    client.on('guildCreate', onGuildCreate);
-};
+client.once('ready', onReady);
+client.login(discordBotToken);
+client.on('interactionCreate', onInteraction);
+client.on('threadCreate', onThreadCreate);
+client.on('guildCreate', onGuildCreate);
 
 export default {};

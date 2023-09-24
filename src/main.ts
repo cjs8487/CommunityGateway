@@ -5,7 +5,6 @@ import { logInfo } from './Logger';
 import api from './routes/API';
 import { sessionSecret, testing } from './Environment';
 import { fileManager, sessionStore } from './System';
-import { init } from './bots/discord/DiscordBot';
 
 // redeclare express-session so that we can add our own types to the session data interface
 declare module 'express-session' {
@@ -74,5 +73,3 @@ app.get('/*', (req, res) => {
 app.listen(port, async () => {
     logInfo(`CommunityGateway server listening on port ${port}`);
 });
-
-init();
