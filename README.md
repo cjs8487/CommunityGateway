@@ -61,17 +61,12 @@ they are granted can be fine tuned. The following security points are offered
 - **DISCORD_CLIENT_ID** - Discord application client id
 - **DISCORD_CLIENT_SECRET** - Discord application client secret
 - **DISCORD_REDIRECT** - URL to redirect to at the conclusion of the OAuth flow
-- **DISCORD_SERVER** - Server (Guild) ID of the main server served by the gateway
-- **DISCORD_ADMIN_ROLE** - Role ID to give admin permissions to. Must be a role
-  in the server identified by DISCORD_SERVER
 - **SESSION_SECRET** - Secret key used in the session store to sign the cookie.
   Should be a cryptographically secure string for production environments.
 - **DISCORD_BOT_TOKEN** - Discord bot application token. Used to log the bot in,
   as well as make "user-less" API requests
 
 ### Optional
-- **DISCORD_ADMIN_OVERRIDE** - A single Discord User ID to grant admin privileges
-  to, regardless of other checks
 - **DISCORD_COMMAND_SERVER_ID** - When testing mode is enabled, slash commands
   provided by the Discord Bot 
 - **testing** - settings this flag will enable various testing utilities,

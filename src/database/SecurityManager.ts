@@ -1,11 +1,9 @@
-import axios from 'axios';
-import { Guild, Role } from '../lib/DiscordTypes';
-import { discordApiRoot, discordBotToken, discordServer } from '../Environment';
+import { Role } from '../lib/DiscordTypes';
 import { logInfo } from '../Logger';
-import { userManager } from '../System';
+import { config, userManager } from '../System';
 import { User } from './UserManager';
 import { Database } from './core/Database';
-import { getGuildMember } from '../external/discord/DiscordApi';
+import { getGuild, getGuildMember } from '../external/discord/DiscordApi';
 
 export type SecurityPoint = {
     id: number;
@@ -51,24 +49,18 @@ export class SecurityManager {
         this.db = db;
 
         // role initialization
-        const res = axios.get<Guild>(
-            `${discordApiRoot}/guilds/${discordServer}`,
-            {
-                headers: {
-                    Authorization: `Bot ${discordBotToken}`,
-                },
-            },
-        );
-
-        // asynchronous initialization - this information isn't needed
-        // immediately following initialization but is utilized later and during
-        // normal program runtime operations
-        res.then(({ data: guild }) => {
+        Promise.all(
+            config.servers.map(async (server) => {
+                if (!server.enabled || !server.botConnected) return;
+                const guild = await getGuild(server.id);
+                this.allRoles.push(
+                    ...guild.roles.filter(
+                        (role) => !role.managed && role.name !== '@everyone',
+                    ),
+                );
+            }),
+        ).then(() => {
             logInfo('Security Manager Entering Second Phase Initialization');
-            this.allRoles = guild.roles.filter(
-                (role) => !role.managed && role.name !== '@everyone',
-            );
-
             const allRoleIds = this.allRoles.map((role) => role.id);
             const assignedRoles: string[] = [];
             this.getAllRoles().forEach((role) => {
@@ -129,18 +121,29 @@ export class SecurityManager {
         if (canSkip && !this.canCheck.get(user.id)) {
             return;
         }
-        const discordUser = await getGuildMember(discordServer, user.discordId);
         const grants: string[] = [];
-        discordUser.roles.forEach((roleId) => {
-            const role = this.getRoleForDiscordRole(roleId);
-            if (!role) return;
-            role.points.forEach((point) => {
-                if (grants.length === permissions.length) return;
-                if (point.enabled && !grants.includes(point.permission)) {
-                    grants.push(point.permission);
-                }
-            });
-        });
+        await Promise.all(
+            config.servers.map(async (server) => {
+                if (!server.enabled || !server.botConnected) return;
+                const discordUser = await getGuildMember(
+                    server.id,
+                    user.discordId,
+                );
+                discordUser.roles.forEach((roleId) => {
+                    const role = this.getRoleForDiscordRole(roleId);
+                    if (!role) return;
+                    role.points.forEach((point) => {
+                        if (grants.length === permissions.length) return;
+                        if (
+                            point.enabled &&
+                            !grants.includes(point.permission)
+                        ) {
+                            grants.push(point.permission);
+                        }
+                    });
+                });
+            }),
+        );
         this.securityCache.set(user.id, grants);
         this.canCheck.set(user.id, false);
         setTimeout(() => this.canCheck.set(user.id, true), 15 * 60 * 1000);
