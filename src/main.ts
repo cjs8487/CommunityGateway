@@ -1,12 +1,10 @@
 import path from 'path';
 import express from 'express';
 import session from 'express-session';
-import SqliteStore from 'better-sqlite3-session-store';
 import { logInfo } from './Logger';
 import api from './routes/API';
 import { sessionSecret, testing } from './Environment';
-import { fileManager, sessionsDb } from './System';
-import { init } from './bots/discord/DiscordBot';
+import { fileManager, sessionStore } from './System';
 
 // redeclare express-session so that we can add our own types to the session data interface
 declare module 'express-session' {
@@ -37,13 +35,7 @@ app.use((req, res, next) => {
 // cookie security and proxy only matter when in production
 app.use(
     session({
-        store: new (SqliteStore(session))({
-            client: sessionsDb,
-            expired: {
-                clear: true,
-                intervalMs: 90000,
-            },
-        }),
+        store: sessionStore,
         secret: sessionSecret,
         resave: false,
         saveUninitialized: true,
@@ -81,5 +73,3 @@ app.get('/*', (req, res) => {
 app.listen(port, async () => {
     logInfo(`CommunityGateway server listening on port ${port}`);
 });
-
-init();

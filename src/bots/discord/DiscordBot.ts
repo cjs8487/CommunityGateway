@@ -3,6 +3,7 @@ import {
     ChannelType,
     Client,
     GatewayIntentBits,
+    Guild,
     Interaction,
     REST,
     Routes,
@@ -19,7 +20,8 @@ import { commandList } from './commands/CommandList';
 import buttonHandlers from './commands/components/ButtonList';
 // import { editMessage } from './util/MessageUtils';
 import { syncAll } from './modules/DataSync';
-import { discordDataManager } from '../../System';
+import { config, discordDataManager } from '../../System';
+import { writeConfig } from '../../Config';
 
 export const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
@@ -102,11 +104,22 @@ const onThreadCreate = (thread: ThreadChannel) => {
     });
 };
 
-export const init = async () => {
-    client.once('ready', onReady);
-    client.login(discordBotToken);
-    client.on('interactionCreate', onInteraction);
-    client.on('threadCreate', onThreadCreate);
+const onGuildCreate = (guild: Guild) => {
+    if (config.serverIds.includes(guild.id)) {
+        const connection = config.servers.find(
+            (server) => server.id === guild.id,
+        );
+        if (connection) {
+            connection.botConnected = true;
+            writeConfig(config);
+        }
+    }
 };
+
+client.once('ready', onReady);
+client.login(discordBotToken);
+client.on('interactionCreate', onInteraction);
+client.on('threadCreate', onThreadCreate);
+client.on('guildCreate', onGuildCreate);
 
 export default {};

@@ -111,3 +111,5 @@ build/
 .vscode/
 /files/
 *-audit.json
+*.log.gz
+config/

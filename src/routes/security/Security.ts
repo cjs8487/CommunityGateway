@@ -15,11 +15,16 @@ security.get('/', (req, res) => {
 });
 
 security.get('/roles', isAuthenticated, isAdmin, async (req, res) => {
-    const roles = securityManager.availableRoles.map((role) => ({
-        id: role.id,
-        name: role.name,
-    }));
-    res.status(200).send(roles);
+    res.status(200).send(
+        securityManager.availableRoles.map((role) => ({
+            id: role.id,
+            name: role.name,
+            color: role.color,
+            guildId: role.guild.id,
+            guildIcon: role.guild.icon,
+            guildName: role.guild.name,
+        })),
+    );
 });
 
 security.post('/', isAuthenticated, isAdmin, (req, res) => {

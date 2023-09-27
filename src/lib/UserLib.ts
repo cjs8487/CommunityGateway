@@ -1,28 +1,38 @@
 import axios from 'axios';
-import {
-    discordAdminOverride,
-    discordAdminRole,
-    discordApiRoot,
-    discordServer,
-} from '../Environment';
+import { discordApiRoot } from '../Environment';
 import { DiscordToken } from '../core/auth/DiscordTokens';
 import { DiscordUser, GuildMember } from './DiscordTypes';
-import { securityManager, userManager } from '../System';
+import { config, securityManager, userManager } from '../System';
 import { User } from '../database/UserManager';
 
 export const hasAdminRoles = async (token: DiscordToken): Promise<boolean> => {
-    const { data } = await axios.get<GuildMember>(
-        `${discordApiRoot}/users/@me/guilds/${discordServer}/member`,
+    let hasPerms = false;
+    const { data: me } = await axios.get<DiscordUser>(
+        `${discordApiRoot}/users/@me`,
         {
             headers: {
                 Authorization: `Bearer ${token.accessToken}`,
             },
         },
     );
-    return (
-        data.roles.includes(discordAdminRole) ||
-        data.user.id === discordAdminOverride
+    if (config.superusers.includes(me.id)) return true;
+    await Promise.all(
+        config.servers.map(async (server) => {
+            if (hasPerms || !server.adminRole || !server.enabled) return;
+            const { data } = await axios.get<GuildMember>(
+                `${discordApiRoot}/users/@me/guilds/${server.id}/member`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token.accessToken}`,
+                    },
+                },
+            );
+            if (data.roles.includes(server.adminRole)) {
+                hasPerms = true;
+            }
+        }),
     );
+    return hasPerms;
 };
 
 export const getOrCreateUser = async (

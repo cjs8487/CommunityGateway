@@ -1,10 +1,11 @@
 import { readFileSync, readdirSync, copyFileSync } from 'fs';
 import Database, { Database as DB } from 'better-sqlite3';
+import SqliteStore from 'better-sqlite3-session-store';
+import session from 'express-session';
 import { testing } from './Environment';
 import { logError, logInfo, logVerbose } from './Logger';
 import { DynamicDataManager } from './database/DynamicDataManager';
 import { UserManager } from './database/UserManager';
-// eslint-disable-next-line import/no-cycle
 import { AsyncManager } from './database/AsyncManager';
 import { DiscordDataManager } from './database/DiscordDataManager';
 import DispatchManager from './lib/DispatchManager';
@@ -12,6 +13,7 @@ import { FileManager } from './database/FileManager';
 import { loadFilesFromDisk } from './database/core/DatabaseCore';
 import { SecurityManager } from './database/SecurityManager';
 import SQLiteDatabase from './database/core/SQLiteDatabase';
+import { loadConfig } from './Config';
 
 // database setup
 // this setup sequence makes several assumptions
@@ -85,6 +87,16 @@ process.on('SIGTERM', () => process.exit(128 + 15));
 process.on('exit', () => db.close());
 
 const database = new SQLiteDatabase(db);
+
+export const sessionStore = new (SqliteStore(session))({
+    client: sessionsDb,
+    expired: {
+        clear: true,
+        intervalMs: 90000,
+    },
+});
+
+export const config = loadConfig();
 
 export const dispatchManager = new DispatchManager();
 export const userManager = new UserManager(database);
