@@ -1,12 +1,16 @@
 import { Router } from 'express';
-import { isAdmin, isAuthenticated } from '../../core/auth/AuthCore';
+import {
+    isAdmin,
+    isAuthenticated,
+    isSuperuser,
+} from '../../core/auth/AuthCore';
 import discordManagement from './DiscordManagement';
 import adminManagement from './AdminManagement';
 import { sessionStore } from '../../System';
 
 const superuser = Router();
 
-superuser.use(isAuthenticated, isAdmin);
+superuser.use(isAuthenticated, isAdmin, isSuperuser);
 
 superuser.use('/discord', discordManagement);
 superuser.use('/admins', adminManagement);

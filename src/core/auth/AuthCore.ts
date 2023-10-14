@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { userManager } from '../../System';
+import { config, userManager } from '../../System';
+import { logWarn } from '../../Logger';
 
 // small implementation note about sessions - we unset session data, and then
 // destroy the session after forcing a save back to the database. This ensures
@@ -81,6 +82,32 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     if (req.session.user && userManager.getUser(req.session.user)?.isAdmin)
         next();
     else res.sendStatus(403);
+};
+
+export const isSuperuser = (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    if (
+        req.session.user &&
+        config.superusers.includes(
+            userManager.getUser(req.session.user).discordId,
+        )
+    ) {
+        next();
+    } else {
+        if (req.session.user) {
+            logWarn(
+                `Valid session was blocked from superuser resources for user ${req.session.user}`,
+            );
+        } else {
+            logWarn(
+                'An invalid or non-existent session was blocked from super resources',
+            );
+        }
+        res.sendStatus(403);
+    }
 };
 
 export const logout = (req: Request, res: Response, next: NextFunction) => {
