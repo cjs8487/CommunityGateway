@@ -140,7 +140,7 @@ const data: Command = {
         const type = interaction.options.getString('type') ?? '';
         if (interaction.options.getSubcommandGroup() === 'sync') {
             const subcommand = interaction.options.getSubcommand();
-            if (subcommand !== 'split') {
+            if (subcommand !== 'clear') {
                 if (
                     discordDataManager.channelHasSyncGroup(
                         interaction.channelId,
