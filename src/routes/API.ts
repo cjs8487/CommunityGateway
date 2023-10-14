@@ -1,7 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 import bodyParser from 'body-parser';
 import { Router } from 'express';
-import { securityManager, userManager } from '../System';
+import { config, securityManager, userManager } from '../System';
 import { logError } from '../Logger';
 import { isAuthenticated, logout } from '../core/auth/AuthCore';
 import discordAuth from './auth/DiscordAuth';
@@ -55,6 +55,7 @@ api.get(
                 internalId: req.session.user,
                 isAdmin: internalUser?.isAdmin,
                 grants: securityManager.securityCache.get(internalUser.id),
+                isSuperuser: config.superusers.includes(internalUser.discordId),
             };
             res.status(200).send(userData);
         } catch (e) {
