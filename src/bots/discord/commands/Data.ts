@@ -9,6 +9,7 @@ import {
     clearSync,
     formatDataToGroupLabelLinkList,
     formatDataToLabelLinkList,
+    formatDataToLabeledList,
     formatDataToList,
 } from '../modules/DataSync';
 import { smartSplit } from '../util/MessageUtils';
@@ -190,7 +191,7 @@ const data: Command = {
                     await interaction.editReply('No data found.');
                     return;
                 }
-                const response = formatDataToLabelLinkList(
+                const response = formatDataToLabeledList(
                     requestedData,
                     labelKey,
                     linkKey,
