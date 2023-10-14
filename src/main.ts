@@ -16,7 +16,7 @@ declare module 'express-session' {
     }
 }
 
-const port = 8000;
+const port = 8001;
 
 const app = express();
 

@@ -49,6 +49,28 @@ const data: Command = {
                 )
                 .addSubcommand((subcommand) =>
                     subcommand
+                        .setName('labeled-list')
+                        .setDescription('Lists data as a label and text')
+                        .addStringOption(typeOption)
+                        .addStringOption((option) =>
+                            option
+                                .setName('label-key')
+                                .setDescription(
+                                    'The name of the foeld in the data to display as the label',
+                                )
+                                .setRequired(true),
+                        )
+                        .addStringOption((option) =>
+                            option
+                                .setName('text-key')
+                                .setDescription(
+                                    'The name of the field in the data to display as the value',
+                                )
+                                .setRequired(true),
+                        ),
+                )
+                .addSubcommand((subcommand) =>
+                    subcommand
                         .setName('label-and-link')
                         .setDescription(
                             'Lists data items with a label and link from the supplied keys',
@@ -157,6 +179,42 @@ const data: Command = {
                 await interaction.editReply(
                     `Success. Created ${responseList.length} messages.`,
                 );
+            } else if (subcommand === 'labeled-list') {
+                const labelKey = interaction.options.getString(
+                    'label-key',
+                    true,
+                );
+                const linkKey = interaction.options.getString('text-key', true);
+                const requestedData = dynamicDataManager.getAllData(type);
+                if (requestedData.length === 0) {
+                    await interaction.editReply('No data found.');
+                    return;
+                }
+                const response = formatDataToLabelLinkList(
+                    requestedData,
+                    labelKey,
+                    linkKey,
+                );
+                const responseList = smartSplit(response);
+                responseList.forEach(async (content) => {
+                    const message = await interaction.channel?.send({
+                        content,
+                    });
+                    discordDataManager.saveDataSyncInfo(
+                        type,
+                        interaction.guildId ?? '',
+                        interaction.channelId,
+                        'labelList',
+                        {
+                            key: labelKey,
+                            secondaryKey: linkKey,
+                        },
+                        message?.id ?? '',
+                    );
+                });
+                await interaction.editReply(
+                    `Success. Created ${responseList.length} messages.`,
+                );
             } else if (subcommand === 'label-and-link') {
                 const labelKey = interaction.options.getString(
                     'label-key',
@@ -182,7 +240,7 @@ const data: Command = {
                         type,
                         interaction.guildId ?? '',
                         interaction.channelId,
-                        'list',
+                        'labelLink',
                         {
                             key: labelKey,
                             secondaryKey: linkKey,
@@ -223,7 +281,7 @@ const data: Command = {
                         type,
                         interaction.guildId ?? '',
                         interaction.channelId,
-                        'list',
+                        'groupLabelLink',
                         {
                             key: labelKey,
                             secondaryKey: linkKey,

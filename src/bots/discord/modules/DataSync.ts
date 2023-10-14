@@ -21,6 +21,19 @@ export const formatDataToList = (data: DynamicData[], key: string): string => {
     return `- ${values.join('\n- ')}`;
 };
 
+export const formatDataToLabeledList = (
+    data: DynamicData[],
+    labelKey: string,
+    textKey: string,
+) => {
+    const values: string[] = [];
+    data.forEach((item) => {
+        const parsedItem = JSON.parse(item.data);
+        values.push(`${bold(parsedItem[labelKey])}\n${parsedItem[textKey]}`);
+    });
+    return `${values.join('\n\n')}`;
+};
+
 export const formatDataToLabelLinkList = (
     data: DynamicData[],
     labelKey: string,
@@ -75,6 +88,12 @@ export const formatForType = (
     switch (type) {
         case 'list':
             return formatDataToList(data, keys.key);
+        case 'labelList':
+            return formatDataToLabeledList(
+                data,
+                keys.key,
+                keys.secondaryKey ?? '',
+            );
         case 'labelLink':
             return formatDataToLabelLinkList(
                 data,
