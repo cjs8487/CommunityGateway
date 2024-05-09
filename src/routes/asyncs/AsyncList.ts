@@ -77,7 +77,7 @@ asyncs.post('/', (req, res) => {
         return;
     }
     const { name, permalink, hash, time, comment } = req.body;
-    if (userHasGrant(user, asyncGrant) || time) {
+    if (!userHasGrant(user, asyncGrant) || time) {
         // apply extra rules for async creation by non-staff
         // non-staff asyncs must be created in parallel with a submission, and must be done
         // in a singe request to prevent inadvertently orphaning incomplete async records
@@ -99,6 +99,7 @@ asyncs.post('/', (req, res) => {
             comment,
         );
         res.status(201).send();
+        return;
     }
     asyncManager.createAsync(name, permalink, hash, req.session.user);
     res.status(201).send();
