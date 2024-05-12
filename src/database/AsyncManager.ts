@@ -156,13 +156,17 @@ export class AsyncManager {
         permalink: string,
         hash: string,
         creator: number,
+        version: string,
+        versionLink: string,
     ) {
         return this.db.run(
-            'insert into asyncs (name, permalink, hash, creator) values (?, ?, ?, ?)',
+            'insert into asyncs (name, permalink, hash, creator, version, version_link) values (?, ?, ?, ?, ?, ?)',
             name,
             permalink,
             hash,
             creator,
+            version,
+            versionLink,
         ).lastInsertRowid;
     }
 

@@ -76,7 +76,8 @@ asyncs.post('/', (req, res) => {
         res.status(403).send();
         return;
     }
-    const { name, permalink, hash, time, comment } = req.body;
+    const { name, permalink, hash, time, comment, version, versionLink } =
+        req.body;
     if (!userHasGrant(user, asyncGrant) || time) {
         // apply extra rules for async creation by non-staff
         // non-staff asyncs must be created in parallel with a submission, and must be done
@@ -91,6 +92,8 @@ asyncs.post('/', (req, res) => {
             permalink,
             hash,
             req.session.user,
+            version,
+            versionLink,
         );
         asyncManager.createSubmission(
             async as number,
@@ -101,7 +104,14 @@ asyncs.post('/', (req, res) => {
         res.status(201).send();
         return;
     }
-    asyncManager.createAsync(name, permalink, hash, req.session.user);
+    asyncManager.createAsync(
+        name,
+        permalink,
+        hash,
+        req.session.user,
+        version,
+        versionLink,
+    );
     res.status(201).send();
 });
 
